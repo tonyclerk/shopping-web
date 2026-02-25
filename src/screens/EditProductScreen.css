@@ -1,0 +1,351 @@
+.edit-product-content {
+  padding: 24px;
+  display: grid;
+  gap: 24px;
+}
+
+.edit-back-btn {
+  width: max-content;
+  height: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.edit-back-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+.edit-page-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.edit-head-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(21, 93, 252, 0.1);
+  display: grid;
+  place-items: center;
+}
+
+.edit-head-icon img {
+  width: 24px;
+  height: 24px;
+}
+
+.edit-page-head h2 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.edit-page-head p {
+  margin: 8px 0 0;
+  color: #717182;
+}
+
+.edit-screen-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: 24px;
+}
+
+.edit-main-col,
+.edit-side-col {
+  display: grid;
+  gap: 24px;
+  align-content: start;
+}
+
+.edit-tabs {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  background: #fff;
+  padding: 5px;
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+}
+
+.edit-tabs button {
+  border: 0;
+  border-radius: 10px;
+  min-height: 32px;
+  padding: 0 12px;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.edit-tabs button.selected {
+  background: #f3f4f6;
+}
+
+.edit-card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  background: #fff;
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.edit-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.edit-card label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.edit-card input,
+.edit-card textarea {
+  width: 100%;
+  min-height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: #f3f3f5;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.stock-status {
+  margin: 0;
+}
+
+.edit-actions {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+}
+
+.save-btn,
+.cancel-btn,
+.light-btn {
+  min-height: 36px;
+  border-radius: 8px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.save-btn {
+  border: 0;
+  background: #030213;
+  color: #fff;
+}
+
+.cancel-btn,
+.light-btn {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.preview-thumb {
+  height: 160px;
+  border-radius: 10px;
+  background: #e5e7eb;
+  color: #6a7282;
+  display: grid;
+  place-items: center;
+}
+
+.preview-row {
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.preview-row p {
+  margin: 0;
+  color: #717182;
+  font-size: 12px;
+}
+
+.preview-row strong {
+  margin-top: 4px;
+  display: block;
+}
+
+.tips-card {
+  border: 1px solid #bedbff;
+  border-radius: 14px;
+  background: #eff6ff;
+  padding: 24px;
+}
+
+.tips-card h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #1c398e;
+}
+
+.tips-card p {
+  margin: 8px 0 0;
+  color: #193cb8;
+}
+
+.important-card {
+  border: 1px solid #ffd6a7;
+  border-radius: 14px;
+  background: #fff7ed;
+  padding: 24px;
+}
+
+.important-card h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #7e2a0c;
+}
+
+.important-card p {
+  margin: 12px 0 0;
+  color: #9f2d00;
+}
+
+.edit-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.5);
+  display: grid;
+  place-items: center;
+  z-index: 60;
+  padding: 16px;
+}
+
+.edit-dialog-card {
+  width: min(820px, 100%);
+  max-height: calc(100vh - 32px);
+  border-radius: 10px;
+  background: #fff;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.edit-dialog-header {
+  padding: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.edit-dialog-header h3 {
+  margin: 0;
+}
+
+.edit-dialog-header p {
+  margin: 8px 0 0;
+  color: #717182;
+}
+
+.edit-dialog-header button {
+  border: 0;
+  background: transparent;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.edit-dialog-body {
+  overflow: auto;
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.edit-dialog-body label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.edit-dialog-body input,
+.edit-dialog-body textarea,
+.edit-dialog-body select {
+  width: 100%;
+  min-height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: #f3f3f5;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.edit-dialog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.edit-variant-card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.edit-variant-card h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.readonly-box {
+  min-height: 36px;
+  border-radius: 8px;
+  background: rgba(249, 250, 251, 0.5);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+}
+
+.edit-dialog-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .edit-screen-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .edit-product-content {
+    padding: 16px;
+  }
+
+  .edit-page-head h2 {
+    font-size: 24px;
+  }
+
+  .edit-grid,
+  .edit-dialog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-dialog-actions {
+    grid-template-columns: 1fr;
+  }
+}

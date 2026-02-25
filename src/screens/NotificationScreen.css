@@ -1,0 +1,219 @@
+.notif-content {
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+  background: #f3f4f6;
+}
+
+.notif-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.notif-head h2 {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.notif-head p {
+  margin: 8px 0 0;
+  color: #4a5565;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.notif-head button {
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid #d7d8dc;
+  background: #fff;
+  padding: 0 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.notif-head button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notif-list {
+  display: grid;
+  gap: 12px;
+}
+
+.notif-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.notif-filters button {
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #d7d8dc;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.notif-filters button.active {
+  background: #030213;
+  color: #fff;
+  border-color: #030213;
+}
+
+.notif-item {
+  border: 1px solid #d7d8dc;
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px 14px;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 12px;
+  cursor: pointer;
+  align-items: start;
+}
+
+.notif-item.unread {
+  border-width: 2px;
+  border-color: #4f39f6;
+  background: #fff;
+}
+
+.notif-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #eef2ff;
+  display: grid;
+  place-items: center;
+}
+
+.notif-icon.orders {
+  background: #eef2ff;
+}
+
+.notif-icon.payments {
+  background: #eaf9ef;
+}
+
+.notif-icon.inventory {
+  background: #fff0f0;
+}
+
+.notif-icon.products {
+  background: #eaf9ef;
+}
+
+.notif-icon img {
+  width: 18px;
+  height: 18px;
+}
+
+.notif-title-row {
+  display: flex;
+  align-items: center;
+}
+
+.notif-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notif-title-left h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.new-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #4f39f6;
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 8px;
+}
+
+.notif-main p {
+  margin: 8px 0 0;
+  color: #4a5565;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.notif-main small {
+  margin-top: 8px;
+  display: block;
+  color: #6a7282;
+  font-size: 13px;
+}
+
+.notif-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.notif-actions button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.notif-actions .read-btn {
+  color: #111827;
+}
+
+.notif-actions .delete-btn {
+  color: #f0001c;
+}
+
+@media (max-width: 768px) {
+  .notif-content {
+    padding: 16px;
+  }
+
+  .notif-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .notif-head h2 {
+    font-size: 26px;
+  }
+
+  .notif-head p {
+    font-size: 16px;
+  }
+
+  .notif-item {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .notif-actions {
+    grid-column: 2;
+  }
+
+  .notif-title-left h3 {
+    font-size: 17px;
+  }
+
+  .notif-main p {
+    font-size: 15px;
+  }
+
+  .notif-main small {
+    font-size: 13px;
+  }
+}

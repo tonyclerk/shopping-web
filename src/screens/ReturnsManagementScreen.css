@@ -1,0 +1,278 @@
+.returns-mgmt-content {
+  padding: 24px;
+  display: grid;
+  gap: 24px;
+}
+
+.back-btn {
+  width: max-content;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.back-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+.mgmt-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mgmt-title-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(152, 16, 250, 0.1);
+  display: grid;
+  place-items: center;
+}
+
+.mgmt-title-icon img {
+  width: 24px;
+  height: 24px;
+}
+
+.mgmt-title-wrap h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.mgmt-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mgmt-stat-card {
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.mgmt-stat-card.highlight {
+  border-color: #f54900;
+  border-width: 2px;
+}
+
+.mgmt-stat-card p {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 14px;
+}
+
+.mgmt-stat-card h3 {
+  margin: 8px 0 0;
+  font-size: 32px;
+}
+
+.mgmt-tabs {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  overflow-x: auto;
+}
+
+.mgmt-tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 14px 24px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mgmt-tab span {
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.06);
+  font-size: 12px;
+}
+
+.mgmt-tab.selected {
+  color: #9810fa;
+  border-bottom-color: #9810fa;
+}
+
+.mgmt-tab.selected span {
+  color: #9810fa;
+  background: rgba(152, 16, 250, 0.1);
+}
+
+.return-card {
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  display: grid;
+  gap: 16px;
+}
+
+.return-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.return-card-head h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.requested-pill {
+  background: #1a1a1a;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.return-chip-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.chip {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  font-size: 12px;
+}
+
+.return-chip-row small {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.info-box {
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid;
+}
+
+.info-box.blue {
+  background: #eff6ff;
+  border-color: #bedbff;
+}
+
+.info-box.red {
+  background: #fff5f5;
+  border-color: #ffbebe;
+}
+
+.info-box small {
+  color: rgba(0, 0, 0, 0.6);
+  font-weight: 600;
+}
+
+.info-box p {
+  margin: 8px 0 0;
+}
+
+.return-value-label {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.return-value {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 700;
+  color: #e7000b;
+}
+
+.return-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.accept-btn,
+.reject-btn,
+.view-btn {
+  height: 40px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.accept-btn {
+  background: #00a63e;
+  color: #fff;
+}
+
+.reject-btn {
+  background: #e7000b;
+  color: #fff;
+}
+
+.view-btn {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.empty-text {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.policy-box {
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(152, 16, 250, 0.3);
+  background: rgba(152, 16, 250, 0.1);
+}
+
+.policy-box h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.policy-box ul {
+  margin: 16px 0 0;
+  padding-left: 18px;
+}
+
+.policy-box li {
+  margin: 8px 0;
+}
+
+@media (max-width: 1100px) {
+  .mgmt-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .returns-mgmt-content {
+    padding: 16px;
+  }
+
+  .mgmt-title-wrap h2 {
+    font-size: 24px;
+  }
+
+  .mgmt-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .return-actions {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,283 @@
+.low-stock-content {
+  padding: 24px;
+  display: grid;
+  gap: 24px;
+}
+
+.low-stock-back-btn {
+  width: max-content;
+  height: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.low-stock-back-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+.low-stock-page-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.low-stock-head-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(231, 0, 11, 0.1);
+  display: grid;
+  place-items: center;
+}
+
+.low-stock-head-icon img {
+  width: 24px;
+  height: 24px;
+}
+
+.low-stock-page-head h2 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.low-stock-page-head p {
+  margin: 8px 0 0;
+  color: #717182;
+}
+
+.low-stock-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.low-stock-stat-card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  background: #fff;
+  padding: 24px;
+}
+
+.low-stock-stat-card.highlight {
+  border-width: 2px;
+  border-color: #2b7fff;
+}
+
+.low-stock-stat-card p {
+  margin: 0;
+  color: #717182;
+}
+
+.low-stock-stat-card h3 {
+  margin: 8px 0 0;
+  font-size: 30px;
+}
+
+.low-stock-products-list {
+  display: grid;
+  gap: 16px;
+}
+
+.low-stock-product-card {
+  border: 2px solid #fff085;
+  border-radius: 14px;
+  background: #fefce8;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 2fr) minmax(240px, 1fr);
+  gap: 16px;
+}
+
+.low-stock-product-thumb {
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  background: #e5e7eb;
+  color: #6b7280;
+  display: grid;
+  place-items: center;
+}
+
+.low-stock-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.low-stock-title-row h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.low-stock-title-row span {
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 8px;
+}
+
+.category-pill {
+  margin-top: 8px;
+  width: max-content;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: #fff;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.brand-line,
+.sku-line {
+  margin: 4px 0 0;
+  color: #717182;
+}
+
+.stock-level-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.stock-level-row p {
+  margin: 0;
+  color: #717182;
+}
+
+.stock-level-row strong {
+  font-size: 14px;
+}
+
+.low-stock-product-main progress {
+  margin-top: 8px;
+  width: 100%;
+  height: 12px;
+}
+
+.low-stock-product-main small {
+  margin-top: 8px;
+  display: block;
+  color: #717182;
+}
+
+.stock-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stock-grid div {
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 8px;
+}
+
+.stock-grid small {
+  margin: 0;
+}
+
+.stock-grid strong {
+  margin-top: 4px;
+  display: block;
+}
+
+.low-stock-product-side {
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  padding-left: 16px;
+}
+
+.low-stock-product-side p {
+  margin: 0;
+  color: #717182;
+}
+
+.low-stock-product-side h4 {
+  margin: 4px 0 0;
+  font-size: 20px;
+}
+
+.low-stock-product-side button {
+  margin-top: 8px;
+  width: 100%;
+  min-height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.low-stock-product-side .dark-btn {
+  border: 0;
+  background: #030213;
+  color: #fff;
+}
+
+.low-stock-product-side .light-btn {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.stock-tips-card {
+  border: 1px solid #bedbff;
+  border-radius: 14px;
+  background: #eff6ff;
+  padding: 24px;
+}
+
+.stock-tips-card h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #1c398e;
+}
+
+.stock-tips-card div {
+  margin-top: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.stock-tips-card p {
+  margin: 0;
+  color: #193cb8;
+}
+
+@media (max-width: 1200px) {
+  .low-stock-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .low-stock-product-card {
+    grid-template-columns: 96px 1fr;
+  }
+
+  .low-stock-product-side {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-left: 0;
+    padding-top: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .low-stock-content {
+    padding: 16px;
+  }
+
+  .low-stock-page-head h2 {
+    font-size: 24px;
+  }
+
+  .low-stock-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .low-stock-product-card {
+    grid-template-columns: 1fr;
+  }
+}

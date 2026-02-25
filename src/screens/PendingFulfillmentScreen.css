@@ -1,0 +1,247 @@
+.pending-content {
+  padding: 24px;
+  display: grid;
+  gap: 24px;
+}
+
+.pending-back-btn {
+  width: max-content;
+  height: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.pending-back-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+.pending-page-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pending-page-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(245, 73, 0, 0.1);
+  display: grid;
+  place-items: center;
+}
+
+.pending-page-icon img {
+  width: 24px;
+  height: 24px;
+}
+
+.pending-page-head h2 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.pending-page-head p {
+  margin: 8px 0 0;
+  color: #717182;
+}
+
+.pending-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pending-stat-card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  background: #fff;
+  padding: 24px;
+}
+
+.pending-stat-card p {
+  margin: 0;
+  color: #717182;
+}
+
+.pending-stat-card h3 {
+  margin: 8px 0 0;
+  font-size: 30px;
+}
+
+.pending-tabs {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  background: #fff;
+  padding: 5px;
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+}
+
+.pending-tab {
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  min-height: 29px;
+  padding: 0 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pending-tab.selected {
+  background: #f3f4f6;
+}
+
+.pending-list {
+  display: grid;
+  gap: 16px;
+}
+
+.pending-order-card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  background: #fff;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 16px;
+}
+
+.pending-order-card.urgent {
+  border-width: 2px;
+  border-color: #ffa2a2;
+}
+
+.pending-order-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pending-order-title-row h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.badge {
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #fff;
+}
+
+.badge.new {
+  background: #d4183d;
+}
+
+.badge.urgent {
+  background: #d4183d;
+}
+
+.pending-order-clock {
+  margin: 12px 0 0;
+  color: #717182;
+}
+
+.pending-order-clock span {
+  color: #f54900;
+}
+
+.pending-card-block {
+  margin-top: 12px;
+  border-radius: 10px;
+  background: #f9fafb;
+  padding: 12px;
+}
+
+.pending-card-block.blue {
+  background: #eff6ff;
+}
+
+.pending-card-block small {
+  color: #717182;
+}
+
+.pending-card-block p {
+  margin: 4px 0 0;
+}
+
+.pending-item-row {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pending-order-side {
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  padding-left: 16px;
+}
+
+.pending-order-side p {
+  margin: 0;
+  color: #717182;
+}
+
+.pending-order-side h4 {
+  margin: 4px 0 0;
+  font-size: 24px;
+  color: #00a63e;
+}
+
+.pending-order-side button {
+  margin-top: 8px;
+  width: 100%;
+  min-height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pending-order-side .dark-btn {
+  border: 0;
+  background: #030213;
+  color: #fff;
+}
+
+.pending-order-side .light-btn {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+@media (max-width: 1100px) {
+  .pending-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pending-order-card {
+    grid-template-columns: 1fr;
+  }
+
+  .pending-order-side {
+    border-left: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-left: 0;
+    padding-top: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pending-content {
+    padding: 16px;
+  }
+
+  .pending-page-head h2 {
+    font-size: 24px;
+  }
+
+  .pending-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

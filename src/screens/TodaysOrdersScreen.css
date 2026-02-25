@@ -1,0 +1,250 @@
+.today-orders-content {
+  padding: 24px;
+  display: grid;
+  gap: 24px;
+}
+
+.today-orders-back-btn {
+  width: max-content;
+  height: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.today-orders-back-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+.today-orders-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.today-orders-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(21, 93, 252, 0.1);
+  display: grid;
+  place-items: center;
+}
+
+.today-orders-icon-wrap img {
+  width: 24px;
+  height: 24px;
+}
+
+.today-orders-header h2 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.today-orders-header p {
+  margin: 8px 0 0;
+  color: #717182;
+}
+
+.today-orders-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.today-orders-summary-card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  background: #fff;
+  padding: 24px;
+}
+
+.today-orders-summary-card p {
+  margin: 0;
+  color: #717182;
+  font-size: 14px;
+}
+
+.today-orders-summary-card h3 {
+  margin: 8px 0 0;
+  font-size: 30px;
+}
+
+.today-orders-list-card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  background: #fff;
+  padding: 24px;
+}
+
+.today-orders-list-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.today-orders-list-head h3 {
+  margin: 0;
+}
+
+.today-orders-list-head p {
+  margin: 8px 0 0;
+  color: #717182;
+}
+
+.today-orders-list-head button {
+  height: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.today-orders-list {
+  margin-top: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.today-order-item {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
+  gap: 16px;
+}
+
+.today-order-main h4 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.today-order-top-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.today-order-top-row span {
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: #dbeafe;
+  color: #193cb8;
+  font-size: 12px;
+}
+
+.today-order-meta-row {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.today-order-meta-row p,
+.today-order-time {
+  margin: 0;
+  color: #717182;
+}
+
+.today-order-time {
+  margin-top: 8px;
+}
+
+.today-order-product {
+  margin-top: 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.today-order-product p {
+  margin: 0;
+}
+
+.today-order-product strong {
+  white-space: nowrap;
+}
+
+.today-order-earnings {
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  padding-left: 16px;
+}
+
+.today-order-earnings p {
+  margin: 0;
+  color: #717182;
+}
+
+.today-order-earnings h5 {
+  margin: 4px 0 0;
+  font-size: 24px;
+  color: #00a63e;
+}
+
+.today-order-breakdown {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+  color: #717182;
+}
+
+.today-order-breakdown .negative {
+  color: #e7000b;
+}
+
+.today-order-earnings button {
+  margin-top: 10px;
+  width: 100%;
+  height: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .today-orders-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .today-order-item {
+    grid-template-columns: 1fr;
+  }
+
+  .today-order-earnings {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .today-orders-content {
+    padding: 16px;
+  }
+
+  .today-orders-header h2 {
+    font-size: 24px;
+  }
+
+  .today-order-meta-row {
+    grid-template-columns: 1fr;
+  }
+}

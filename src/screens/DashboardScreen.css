@@ -1,0 +1,148 @@
+.dashboard-content {
+  padding: 24px;
+  display: grid;
+  gap: 24px;
+}
+
+.welcome-title {
+  margin: 0;
+  font-size: 24px;
+}
+
+.welcome-subtitle {
+  margin: 8px 0 0;
+  color: #4a5565;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card-box {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.stat-card {
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  margin: 0;
+  font-size: 14px;
+  color: #4a5565;
+}
+
+.stat-value {
+  margin: 4px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.stat-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+}
+
+.stat-icon-wrap img {
+  width: 24px;
+  height: 24px;
+}
+
+.chart-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.chart-card {
+  min-height: 280px;
+  padding: 24px;
+  display: grid;
+  align-content: start;
+}
+
+.chart-card h3,
+.insights-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.chart-card p {
+  margin: 36px 0 0;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.insights-card {
+  padding: 24px;
+}
+
+.insights-list {
+  margin-top: 30px;
+  display: grid;
+  gap: 12px;
+}
+
+.insight-item {
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+}
+
+.insight-item img {
+  width: 20px;
+  height: 20px;
+}
+
+.insight-item p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.insight-item span {
+  font-size: 12px;
+}
+
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chart-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .insight-item {
+    grid-template-columns: 20px 1fr;
+  }
+
+  .insight-item span {
+    grid-column: 2;
+  }
+}
