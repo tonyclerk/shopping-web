@@ -23,11 +23,17 @@ import EditProductScreen from "./screens/EditProductScreen.jsx";
 import NotificationScreen from "./screens/NotificationScreen.jsx";
 import ProfileScreen from "./screens/ProfileScreen.jsx";
 import RequestCategoriesScreen from "./screens/RequestCategoriesScreen.jsx";
+import WelcomeScreen from "./screens/WelcomeScreen.jsx";
+import WebLoginScreen from "./screens/WebLoginScreen.jsx";
+import SignupScreen from "./screens/SignupScreen.jsx";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<WelcomeScreen />} />
+      <Route path="/welcome" element={<Navigate to="/" replace />} />
+      <Route path="/auth/login" element={<WebLoginScreen />} />
+      <Route path="/auth/signup" element={<SignupScreen />} />
       <Route path="/login" element={<LoginScreen />} />
       <Route path="/verify-otp" element={<OtpVerificationScreen />} />
       <Route path="/onboarding" element={<OnboardingScreen />} />
