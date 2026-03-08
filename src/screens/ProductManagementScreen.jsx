@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect } from "react";
 import {
   collection, addDoc, updateDoc, deleteDoc,
-  doc, onSnapshot, serverTimestamp, query, orderBy
+  doc, onSnapshot, serverTimestamp, query, where,
 } from "firebase/firestore";
-import { auth, db } from "../firebase"; // 👈 adjust to your path
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../firebase";
 import SellerLayout from "../components/SellerLayout.jsx";
 import AddProductDialog from "./AddProductDialog.jsx";
 import "./ProductManagementScreen.css";
@@ -77,13 +78,49 @@ function ProductManagementScreen() {
   );
 
   // ── Real-time Firestore listener ───────────────────────────────────────────
-  useEffect(() => {
-    const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snapshot) => {
-      setFbProducts(snapshot.docs.map(normalizeFirestoreProduct));
-    });
-    return () => unsub(); // cleanup on unmount
-  }, []);
+ // Replace your existing useEffect with this
+useEffect(() => {
+  let unsubscribeProducts = null;
+
+  const unsubscribeAuth = onAuthStateChanged(auth, (seller) => {
+    if (unsubscribeProducts) {
+      unsubscribeProducts();
+      unsubscribeProducts = null;
+    }
+
+    if (!seller) {
+      setFbProducts([]);
+      return;
+    }
+
+    const q = query(
+      collection(db, "products"),
+      where("sellerId", "==", seller.uid),
+    );
+
+    unsubscribeProducts = onSnapshot(
+      q,
+      (snapshot) => {
+        const rows = snapshot.docs.map(normalizeFirestoreProduct);
+        rows.sort((a, b) => {
+          const aMs = a?._raw?.createdAt?.toMillis?.() ?? 0;
+          const bMs = b?._raw?.createdAt?.toMillis?.() ?? 0;
+          return bMs - aMs;
+        });
+        setFbProducts(rows);
+      },
+      (err) => {
+        console.error("Products listener failed:", err);
+        setFbProducts([]);
+      },
+    );
+  });
+
+  return () => {
+    if (unsubscribeProducts) unsubscribeProducts();
+    unsubscribeAuth();
+  };
+}, []);
 
   // Firestore products on top, hardcoded below
   const products = useMemo(() => [...fbProducts, ...INITIAL_PRODUCTS], [fbProducts]);
