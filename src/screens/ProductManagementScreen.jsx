@@ -18,24 +18,7 @@ const TABS = [
 ];
 
 // Hardcoded products stay as-is — flagged with source: "local"
-const INITIAL_PRODUCTS = [
-  { id: "P-1001", name: "Leather Belt",         brand: "Brand 1", category: "Accessories", variants: 2, status: "live",      stock: "94 units",  source: "local" },
-  { id: "P-1002", name: "Canvas Backpack",       brand: "Brand 2", category: "Accessories", variants: 2, status: "approved",  stock: "156 units", source: "local" },
-  { id: "P-1003", name: "Aviator Sunglasses",    brand: "Brand 3", category: "Accessories", variants: 2, status: "submitted", stock: "132 units", source: "local" },
-  { id: "P-1004", name: "Leather Wallet",        brand: "Brand 4", category: "Accessories", variants: 2, status: "draft",     stock: "93 units",  source: "local" },
-  { id: "P-1005", name: "Cotton T-Shirt",        brand: "Brand 1", category: "Clothing",    variants: 2, status: "live",      stock: "88 units",  source: "local" },
-  { id: "P-1006", name: "Denim Jeans",           brand: "Brand 2", category: "Clothing",    variants: 2, status: "approved",  stock: "87 units",  source: "local" },
-  { id: "P-1007", name: "Formal Shirt",          brand: "Brand 3", category: "Clothing",    variants: 2, status: "submitted", stock: "160 units", source: "local" },
-  { id: "P-1008", name: "Casual Hoodie",         brand: "Brand 4", category: "Clothing",    variants: 2, status: "draft",     stock: "96 units",  source: "local" },
-  { id: "P-1009", name: "Running Shoes",         brand: "Brand 1", category: "Shoes",       variants: 2, status: "live",      stock: "63 units",  source: "local" },
-  { id: "P-1010", name: "Formal Oxfords",        brand: "Brand 2", category: "Shoes",       variants: 2, status: "approved",  stock: "74 units",  source: "local" },
-  { id: "P-1011", name: "Casual Sneakers",       brand: "Brand 3", category: "Shoes",       variants: 2, status: "submitted", stock: "94 units",  source: "local" },
-  { id: "P-1012", name: "Leather Boots",         brand: "Brand 4", category: "Shoes",       variants: 2, status: "draft",     stock: "90 units",  source: "local" },
-  { id: "P-1013", name: "Smart Watch Pro",       brand: "Brand 1", category: "Watches",     variants: 2, status: "live",      stock: "69 units",  source: "local" },
-  { id: "P-1014", name: "Classic Analog",        brand: "Brand 2", category: "Watches",     variants: 2, status: "approved",  stock: "131 units", source: "local" },
-  { id: "P-1015", name: "Digital Sports",        brand: "Brand 3", category: "Watches",     variants: 2, status: "submitted", stock: "71 units",  source: "local" },
-  { id: "P-1016", name: "Luxury Chronograph",    brand: "Brand 4", category: "Watches",     variants: 2, status: "draft",     stock: "98 units",  source: "local" },
-];
+
 
 const STATUS_STYLE = {
   live:      { background: "#DCFCE7", color: "#016630" },
@@ -123,7 +106,7 @@ useEffect(() => {
 }, []);
 
   // Firestore products on top, hardcoded below
-  const products = useMemo(() => [...fbProducts, ...INITIAL_PRODUCTS], [fbProducts]);
+  const products = useMemo(() => fbProducts, [fbProducts]);
 
   const counts = useMemo(() => {
     const result = { all: products.length, live: 0, approved: 0, submitted: 0, draft: 0 };

@@ -12,7 +12,7 @@ const EMPTY_VARIANT = {
   discount: "0",
 };
 
-const CATEGORY_OPTIONS = ["Accessories", "Clothing", "Shoes", "Watches"];
+const CATEGORY_OPTIONS = ["Accessories", "Clothing", "Shoes", "Watches", "Eyewear", "Bags", "Beauty"];
 
 const createVariant = () => ({ ...EMPTY_VARIANT, sku: `SKU${Date.now()}` });
 
@@ -24,6 +24,7 @@ function AddProductDialog({ onClose, onSubmit }) {
   const [imageUrl, setImageUrl] = useState("");
   const [variants, setVariants] = useState([createVariant()]);
   const [loading, setLoading] = useState(false);
+  const [gender, setGender] = useState("");
 
   const totalStock = useMemo(
     () => variants.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0),
@@ -56,6 +57,10 @@ function AddProductDialog({ onClose, onSubmit }) {
 
     if (!name.trim()) return window.alert("Product name is required.");
     if (!category) return window.alert("Category is required.");
+    if (!gender) {
+  window.alert("Please select a gender/audience.");
+  return;
+}
 
     const seller = auth.currentUser;
     if (!seller) return window.alert("You must be logged in to add a product.");
@@ -97,6 +102,7 @@ function AddProductDialog({ onClose, onSubmit }) {
   sellerEmail: seller.email,
   createdAt: serverTimestamp(),
   updatedAt: serverTimestamp(),
+  gender,
       };
 
       const docRef = await addDoc(collection(db, "products"), productData);
@@ -147,6 +153,15 @@ function AddProductDialog({ onClose, onSubmit }) {
               <input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Brand name" />
             </label>
           </div>
+          <label>
+  Gender / Audience *
+  <select value={gender} onChange={(e) => setGender(e.target.value)}>
+    <option value="">Select audience</option>
+    <option value="men">Men</option>
+    <option value="women">Women</option>
+    <option value="unisex">Unisex</option>
+  </select>
+</label>
 
           <label>
             Cover Image URL

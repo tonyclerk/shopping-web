@@ -49,44 +49,54 @@
 .order-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 1100px;
+  min-width: 1180px;
 }
 
 .order-table th,
 .order-table td {
-  padding: 10px 8px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   text-align: left;
   font-size: 14px;
   font-weight: 400;
-  white-space: nowrap;
+  vertical-align: middle;
 }
 
-.order-id {
+.order-empty-state {
+  padding: 24px;
+  text-align: center;
+  color: #6a7282;
+}
+
+.order-id,
+.order-customer-name {
   margin: 0;
+  font-weight: 600;
 }
 
-.order-date {
-  margin: 2px 0 0;
+.order-date,
+.order-customer-email {
+  margin: 4px 0 0;
   font-size: 12px;
   color: #6a7282;
 }
 
+.order-customer-cell {
+  min-width: 190px;
+}
+
 .earnings {
   color: #00a63e;
+  font-weight: 600;
 }
 
 .order-status {
   display: inline-block;
-  border-radius: 8px;
-  padding: 2px 8px;
+  border-radius: 999px;
+  padding: 4px 10px;
   font-size: 12px;
-  text-transform: lowercase;
-}
-
-.sla-badge {
-  color: #f54900;
-  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
 .align-right {
@@ -94,28 +104,47 @@
 }
 
 .action-cell {
-  min-width: 260px;
+  min-width: 250px;
 }
 
-.order-view-btn {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: #fff;
-  border-radius: 8px;
-  height: 32px;
-  padding: 0 10px;
-  font-size: 13px;
+.order-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.order-icon-btn {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  margin-left: 8px;
+  padding: 0;
+}
+
+.order-icon-btn svg,
+.order-action-icon svg {
+  width: 14px;
+  height: 14px;
 }
 
 .order-action {
   border: 0;
   border-radius: 8px;
-  height: 32px;
-  padding: 0 10px;
-  font-size: 13px;
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .order-action.dark {
@@ -124,14 +153,14 @@
 }
 
 .order-action.reject {
-  background: #d4183d;
+  background: #e11d48;
   color: #fff;
 }
 
-@media (max-width: 768px) {
-  .order-content {
-    padding: 16px;
-  }
+.order-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .order-detail-modal-overlay {
@@ -147,7 +176,7 @@
 .order-detail-modal {
   width: min(100%, 720px);
   border-radius: 12px;
-  border: 0.8px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   background: #fff;
   padding: 16px 20px;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.2);
@@ -208,6 +237,11 @@
   font-size: 16px;
 }
 
+.order-detail-items-list {
+  display: grid;
+  gap: 10px;
+}
+
 .order-detail-item-card {
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
@@ -227,12 +261,6 @@
   display: grid;
   place-items: center;
   font-size: 18px;
-}
-
-.order-detail-item-thumb img {
-  width: 28px;
-  height: 28px;
-  opacity: 0.55;
 }
 
 .order-detail-item-copy {
@@ -270,10 +298,6 @@
   font-size: 14px;
 }
 
-.order-detail-price-line .negative {
-  color: #dc2626;
-}
-
 .order-detail-earnings-row {
   margin-top: 8px;
   padding-top: 8px;
@@ -294,7 +318,17 @@
   font-size: 30px;
 }
 
+.order-detail-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 768px) {
+  .order-content {
+    padding: 16px;
+  }
+
   .order-detail-modal {
     padding: 14px;
   }
@@ -303,34 +337,8 @@
     font-size: 24px;
   }
 
-  .order-detail-id-label {
-    font-size: 14px;
-  }
-
-  .order-detail-id {
-    font-size: 16px;
-  }
-
   .order-detail-info-grid {
     grid-template-columns: 1fr;
-  }
-
-  .order-detail-info-grid h4,
-  .order-detail-items-title {
-    font-size: 16px;
-  }
-
-  .order-detail-info-grid p,
-  .order-detail-item-copy p {
-    font-size: 13px;
-  }
-
-  .order-detail-item-copy .item-title {
-    font-size: 15px;
-  }
-
-  .order-detail-item-price {
-    font-size: 16px;
   }
 
   .order-detail-item-card {
@@ -340,10 +348,7 @@
   .order-detail-item-price {
     grid-column: 1 / -1;
     text-align: right;
-  }
-
-  .order-detail-price-line {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .order-detail-earnings-row p,
