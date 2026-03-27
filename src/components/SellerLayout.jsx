@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../firebase"; // 👈 adjust path
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth, db } from "../firebase";
 import "./SellerLayout.css";
 
 const MENU_ITEMS = [
@@ -49,9 +49,19 @@ function SellerLayout({ selectedMenu, title, subtitle, children, contentClassNam
   };
 
   const handleLogout = () => {
-    if (onLogout) { onLogout(); return; }
+    if (onLogout) {
+      onLogout();
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to logout?")) return;
-    navigate("/login", { replace: true });
+
+    signOut(auth)
+      .then(() => navigate("/auth/login", { replace: true }))
+      .catch((error) => {
+        console.error("Failed to logout:", error);
+        window.alert("Failed to logout. Please try again.");
+      });
   };
 
   return (

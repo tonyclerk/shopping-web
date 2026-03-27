@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
 import "./OnboardingFlow.css";
 
 function OnboardingScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showToast, setShowToast] = useState(Boolean(location.state?.loginSuccess));
+  const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState({
     brandName: "",
     businessEmail: "",
     businessAddress: "",
+    phone: "",
     accountHolder: "",
     accountNumber: "",
     ifscCode: "",
@@ -22,9 +26,88 @@ function OnboardingScreen() {
     return () => clearTimeout(timeout);
   }, [showToast]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSellerProfile = async () => {
+      const seller = auth.currentUser;
+      if (!seller) return;
+
+      try {
+        const sellerSnapshot = await getDoc(doc(db, "sellers", seller.uid));
+        const sellerData = sellerSnapshot.exists() ? sellerSnapshot.data() : {};
+
+        if (!isMounted) return;
+
+        setForm((prev) => ({
+          ...prev,
+          brandName: sellerData.businessName ?? prev.brandName,
+          businessEmail: sellerData.email ?? seller.email ?? prev.businessEmail,
+          businessAddress: sellerData.address ?? prev.businessAddress,
+          phone: sellerData.phone ?? location.state?.phoneNumber ?? prev.phone,
+          accountHolder: sellerData.bank?.accountHolderName ?? prev.accountHolder,
+          accountNumber: sellerData.bank?.accountNumber ?? prev.accountNumber,
+          ifscCode: sellerData.bank?.ifscCode ?? prev.ifscCode,
+          bankName: sellerData.bank?.bankName ?? prev.bankName,
+        }));
+      } catch (error) {
+        console.error("Failed to load onboarding details:", error);
+      }
+    };
+
+    loadSellerProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [location.state?.phoneNumber]);
+
   const progress = useMemo(() => (1 / 3) * 100, []);
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const canContinue = Boolean(
+    form.brandName.trim() &&
+    form.businessEmail.trim() &&
+    form.businessAddress.trim()
+  );
+
+  const handleContinue = async () => {
+    if (!canContinue || isSaving) return;
+
+    const seller = auth.currentUser;
+    if (!seller) {
+      navigate("/auth/login", { replace: true });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      await setDoc(doc(db, "sellers", seller.uid), {
+        businessName: form.brandName.trim(),
+        email: form.businessEmail.trim(),
+        address: form.businessAddress.trim(),
+        phone: form.phone.trim() || location.state?.phoneNumber || "",
+        bank: {
+          accountHolderName: form.accountHolder.trim(),
+          accountNumber: form.accountNumber.trim(),
+          ifscCode: form.ifscCode.trim(),
+          bankName: form.bankName.trim(),
+        },
+        onboarding: {
+          businessInfoCompleted: true,
+        },
+      }, { merge: true });
+
+      navigate("/categories", { replace: true });
+    } catch (error) {
+      console.error("Failed to save onboarding details:", error);
+      window.alert("Failed to save business information. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <main className="flow-page">
@@ -83,6 +166,11 @@ function OnboardingScreen() {
               />
             </label>
 
+            <label className="flow-field">
+              Phone Number
+              <input value={form.phone} onChange={(event) => update("phone", event.target.value)} placeholder="Business phone number" />
+            </label>
+
             <div className="flow-divider">
               <h2>Bank Details</h2>
             </div>
@@ -108,8 +196,8 @@ function OnboardingScreen() {
               </label>
             </div>
 
-            <button type="button" className="flow-submit" onClick={() => navigate("/categories", { replace: true })}>
-              Continue to Categories
+            <button type="button" className="flow-submit" onClick={handleContinue} disabled={!canContinue || isSaving}>
+              {isSaving ? "Saving..." : "Continue to Categories"}
             </button>
           </form>
         </section>

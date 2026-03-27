@@ -15,6 +15,7 @@ const TABS = [
   { key: "approved", label: "Approved" },
   { key: "submitted", label: "Submitted" },
   { key: "draft", label: "Draft" },
+  { key: "rejected", label: "Rejected" },
 ];
 
 // Hardcoded products stay as-is — flagged with source: "local"
@@ -25,11 +26,28 @@ const STATUS_STYLE = {
   approved:  { background: "#DBEAFE", color: "#193CB8" },
   submitted: { background: "#FEF9C2", color: "#894B00" },
   draft:     { background: "#F3F4F6", color: "#1E2939" },
+  rejected:  { background: "#FEE2E2", color: "#B91C1C" },
 };
 
 const EMPTY_VARIANT = {
   sku: "", color: "", size: "",
-  stock: "0", mrp: "0", basePrice: "0", discount: "0",
+  stock: "0", mrp: "0", basePrice: "0", discount: "0", limitedTimeOffer: false,
+};
+
+const CATEGORY_OPTIONS = ["Accessories", "Clothing", "Shoes", "Watches", "Eyewear", "Bags", "Beauty"];
+
+const SUBCATEGORY_OPTIONS = {
+  Accessories: ["Jewelry", "Belts", "Wallets"],
+  Shoes: ["Sneakers", "Boots", "Heels", "Sandals", "Loafers"],
+  Watches: ["Luxury", "Smartwatch", "Sports", "Casual", "Chronograph"],
+  Eyewear: ["Sunglasses", "Reading", "Blue Light", "Aviator", "Round"],
+  Bags: ["Handbags", "Backpacks", "Tote Bags", "Crossbody", "Travel"],
+  Beauty: ["Skincare", "Makeup", "Haircare", "Fragrance", "Nails"],
+};
+
+const CLOTHING_SUBCATEGORY_OPTIONS = {
+  men: ["Shirts", "T-Shirts", "Pants", "Outerwear", "Jeans"],
+  women: ["Dresses", "Tops", "Skirts", "Outerwear", "Jeans"],
 };
 
 // ─── Helper: normalize a Firestore doc into table row shape ───────────────────
@@ -44,6 +62,7 @@ const normalizeFirestoreProduct = (docSnap) => {
     status:    d.status ?? "draft",
     stock:     d.stock  ?? "0 units",
     imageUrl:  d.image  ?? "",
+    rejectionReason: d.rejectionReason ?? d.rejectReason ?? d.reason ?? "",
     source:    "firestore",                // flag so we know it's editable/deletable
     _raw:      d,                          // keep full data for the edit dialog
   };
@@ -109,7 +128,7 @@ useEffect(() => {
   const products = useMemo(() => fbProducts, [fbProducts]);
 
   const counts = useMemo(() => {
-    const result = { all: products.length, live: 0, approved: 0, submitted: 0, draft: 0 };
+    const result = { all: products.length, live: 0, approved: 0, submitted: 0, draft: 0, rejected: 0 };
     products.forEach((p) => { if (result[p.status] !== undefined) result[p.status] += 1; });
     return result;
   }, [products]);
@@ -133,6 +152,23 @@ useEffect(() => {
       }
     }
     // Hardcoded products: do nothing (or you can remove from local state if you want)
+  };
+
+  const handleStatusAction = async (product, nextStatus) => {
+    if (product.source !== "firestore") return;
+
+    try {
+      await updateDoc(doc(db, "products", product.id), {
+        status: nextStatus,
+        rejectionReason: nextStatus === "submitted" ? "" : (product.rejectionReason ?? ""),
+        rejectReason: nextStatus === "submitted" ? "" : (product._raw?.rejectReason ?? ""),
+        reason: nextStatus === "submitted" ? "" : (product._raw?.reason ?? ""),
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error("Status update failed:", err);
+      window.alert("Failed to update product status.");
+    }
   };
 
   // ── Add / Edit submit ──────────────────────────────────────────────────────
@@ -208,6 +244,7 @@ useEffect(() => {
                 <th>Variants</th>
                 <th>Status</th>
                 <th>Stock</th>
+                {selectedTab === "rejected" ? <th>Reason</th> : null}
                 <th className="align-right">Actions</th>
               </tr>
             </thead>
@@ -238,7 +275,11 @@ useEffect(() => {
                       </span>
                     </td>
                     <td>{product.stock}</td>
+                    {selectedTab === "rejected" ? (
+                      <td>{product.rejectionReason || "-"}</td>
+                    ) : null}
                     <td className="align-right">
+                      <div className="action-group">
                       <button
                         type="button"
                         className="table-action"
@@ -248,6 +289,36 @@ useEffect(() => {
                       >
                         Edit
                       </button>
+                      {product.status === "draft" ? (
+                        <button
+                          type="button"
+                          className="table-action primary"
+                          disabled={isLocal}
+                          onClick={() => !isLocal && handleStatusAction(product, "submitted")}
+                        >
+                          Submit
+                        </button>
+                      ) : null}
+                      {product.status === "approved" ? (
+                        <button
+                          type="button"
+                          className="table-action primary"
+                          disabled={isLocal}
+                          onClick={() => !isLocal && handleStatusAction(product, "live")}
+                        >
+                          Live
+                        </button>
+                      ) : null}
+                      {product.status === "rejected" ? (
+                        <button
+                          type="button"
+                          className="table-action primary"
+                          disabled={isLocal}
+                          onClick={() => !isLocal && handleStatusAction(product, "submitted")}
+                        >
+                          Re Submit
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         className="table-action danger"
@@ -257,6 +328,7 @@ useEffect(() => {
                       >
                         Delete
                       </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -286,15 +358,16 @@ useEffect(() => {
 }
 
 // ─── Edit Dialog ──────────────────────────────────────────────────────────────
-function ProductDialog({ mode, initialProduct, onClose, onSubmit }) {
+function ProductDialog({ initialProduct, onClose, onSubmit }) {
   const raw = initialProduct?._raw ?? {};
 
   const [name,        setName]        = useState(initialProduct?.name     ?? "");
   const [description, setDescription] = useState(raw.description          ?? "");
   const [category,    setCategory]    = useState(initialProduct?.category  ?? "Accessories");
+  const [gender,      setGender]      = useState(raw.gender               ?? "");
+  const [subcategory, setSubcategory] = useState(raw.subcategory          ?? "");
   const [brand,       setBrand]       = useState(initialProduct?.brand     ?? "");
   const [imageUrl,    setImageUrl]    = useState(raw.image                 ?? "");
-  const [status,      setStatus]      = useState(initialProduct?.status    ?? "draft");
   const [variants,    setVariants]    = useState(() => {
     if (raw.variants?.length) {
       return raw.variants.map((v) => ({
@@ -305,6 +378,7 @@ function ProductDialog({ mode, initialProduct, onClose, onSubmit }) {
         mrp:       String(v.mrp       ?? "0"),
         basePrice: String(v.basePrice ?? "0"),
         discount:  String(v.discount  ?? "0"),
+        limitedTimeOffer: Boolean(v.limitedTimeOffer ?? raw.limitedTimeOffer ?? false),
       }));
     }
     return [{ ...EMPTY_VARIANT, sku: "SKU00001" }];
@@ -315,8 +389,37 @@ function ProductDialog({ mode, initialProduct, onClose, onSubmit }) {
     [variants],
   );
 
+  const subcategoryOptions = useMemo(() => {
+    if (!category) return [];
+
+    if (category === "Clothing") {
+      if (gender === "men" || gender === "women") return CLOTHING_SUBCATEGORY_OPTIONS[gender];
+      if (gender === "unisex") {
+        return [...new Set([...CLOTHING_SUBCATEGORY_OPTIONS.men, ...CLOTHING_SUBCATEGORY_OPTIONS.women])];
+      }
+      return [];
+    }
+
+    return SUBCATEGORY_OPTIONS[category] ?? [];
+  }, [category, gender]);
+
+  const selectedSubcategory = subcategoryOptions.includes(subcategory) ? subcategory : "";
+
   const updateVariant = (index, key, value) =>
-    setVariants((prev) => prev.map((v, i) => (i === index ? { ...v, [key]: value } : v)));
+    setVariants((prev) =>
+      prev.map((v, i) => {
+        if (i !== index) return v;
+        if (key === "discount") {
+          const discountValue = Number(value) || 0;
+          return {
+            ...v,
+            discount: value,
+            limitedTimeOffer: discountValue > 0 ? v.limitedTimeOffer : false,
+          };
+        }
+        return { ...v, [key]: value };
+      }),
+    );
 
   const addVariant = () =>
     setVariants((prev) => [...prev, { ...EMPTY_VARIANT, sku: `SKU${Date.now()}` }]);
@@ -335,6 +438,8 @@ function ProductDialog({ mode, initialProduct, onClose, onSubmit }) {
   const submit = (event) => {
     event.preventDefault();
     if (!name.trim()) return window.alert("Product name is required.");
+    if (!gender) return window.alert("Please select a gender/audience.");
+    if (!selectedSubcategory) return window.alert("Subcategory is required.");
 
     const cleanVariants = variants.map((v) => ({
       sku:        v.sku.trim(),
@@ -344,15 +449,19 @@ function ProductDialog({ mode, initialProduct, onClose, onSubmit }) {
       mrp:        Number(v.mrp)       || 0,
       basePrice:  Number(v.basePrice) || 0,
       discount:   Number(v.discount)  || 0,
+      limitedTimeOffer: (Number(v.discount) || 0) > 0 ? Boolean(v.limitedTimeOffer) : false,
       finalPrice: parseFloat(finalPrice(v)),
     }));
+
+    const hasLimitedTimeOffer = cleanVariants.some((variant) => variant.limitedTimeOffer);
 
     onSubmit({
       title:         name.trim(),                       // mobile reads "title"
       name:          name.trim(),                       // table reads "name"
       brand:         brand.trim() || "",
       category,
-      status,
+      subcategory: selectedSubcategory,
+      status:        raw.status ?? initialProduct?.status ?? "draft",
       image:         imageUrl.trim() || "",
       description:   description.trim() || "",
       variants:      cleanVariants,
@@ -361,8 +470,10 @@ function ProductDialog({ mode, initialProduct, onClose, onSubmit }) {
       price:         parseFloat(finalPrice(variants[0])),
       originalPrice: Number(variants[0].mrp) || 0,
       discount:      variants[0].discount ? `${variants[0].discount}%` : undefined,
+      limitedTimeOffer: hasLimitedTimeOffer,
       rating:        raw.rating  ?? 0,
       reviews:       raw.reviews ?? 0,
+      gender,
     });
   };
 
@@ -391,11 +502,14 @@ function ProductDialog({ mode, initialProduct, onClose, onSubmit }) {
           <div className="dialog-grid-2">
             <label>
               Category *
-              <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option>Accessories</option>
-                <option>Clothing</option>
-                <option>Shoes</option>
-                <option>Watches</option>
+              <select
+                value={category}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  setSubcategory("");
+                }}
+              >
+                {CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
             </label>
             <label>
@@ -405,25 +519,44 @@ function ProductDialog({ mode, initialProduct, onClose, onSubmit }) {
           </div>
 
           <label>
+            Gender / Audience *
+            <select
+              value={gender}
+              onChange={(e) => {
+                setGender(e.target.value);
+                setSubcategory("");
+              }}
+            >
+              <option value="">Select audience</option>
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+              <option value="unisex">Unisex</option>
+            </select>
+          </label>
+
+          <label>
+            Subcategory *
+            <select
+              value={selectedSubcategory}
+              onChange={(e) => setSubcategory(e.target.value)}
+              disabled={!subcategoryOptions.length}
+            >
+              <option value="">
+                {category === "Clothing" && !gender ? "Select audience first" : "Select subcategory"}
+              </option>
+              {subcategoryOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </label>
+
+          <label>
             Cover Image URL
             <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.jpg" />
           </label>
 
-          <div className="dialog-grid-2">
-            <label>
-              Status
-              <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                <option value="live">Live</option>
-                <option value="approved">Approved</option>
-                <option value="submitted">Submitted</option>
-                <option value="draft">Draft</option>
-              </select>
-            </label>
-            <label>
-              Total Stock
-              <div className="readonly-value">{totalStock} units (auto-calculated)</div>
-            </label>
-          </div>
+          <label>
+            Total Stock
+            <div className="readonly-value">{totalStock} units (auto-calculated)</div>
+          </label>
 
           <div className="dialog-divider" />
 
@@ -454,6 +587,16 @@ function ProductDialog({ mode, initialProduct, onClose, onSubmit }) {
                 <label>Discount (%)<input value={variant.discount} onChange={(e) => updateVariant(index, "discount", e.target.value)} inputMode="decimal" /></label>
                 <label>Final Price<div className="readonly-value">{finalPrice(variant)}</div></label>
               </div>
+              {(Number(variant.discount) || 0) > 0 ? (
+                <label className="dialog-checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={variant.limitedTimeOffer}
+                    onChange={(e) => updateVariant(index, "limitedTimeOffer", e.target.checked)}
+                  />
+                  {" "}Limited Time Offer
+                </label>
+              ) : null}
             </section>
           ))}
 

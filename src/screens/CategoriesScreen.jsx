@@ -1,30 +1,87 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
+import { SELLER_CATEGORIES } from "../utils/sellerProfile";
 import "./OnboardingFlow.css";
 
-const INITIAL_CATEGORIES = [
-  { name: "Accessories", description: "Belts, bags, sunglasses, wallets", isSelected: false },
-  { name: "Clothing", description: "Men, women, and kids clothing", isSelected: false },
-  { name: "Shoes", description: "Casual, sports, and formal footwear", isSelected: false },
-  { name: "Watches", description: "Analog, digital, and smart watches", isSelected: false },
-];
+const INITIAL_CATEGORIES = SELLER_CATEGORIES.map((category) => ({ ...category, isSelected: false }));
 
 function CategoriesScreen() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [showToast, setShowToast] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const progress = useMemo(() => (2 / 3) * 100, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSellerCategories = async () => {
+      const seller = auth.currentUser;
+      if (!seller) return;
+
+      try {
+        const sellerSnapshot = await getDoc(doc(db, "sellers", seller.uid));
+        const savedCategories = sellerSnapshot.exists() && Array.isArray(sellerSnapshot.data().categories)
+          ? sellerSnapshot.data().categories
+          : [];
+
+        if (!isMounted || savedCategories.length === 0) return;
+
+        setCategories(
+          INITIAL_CATEGORIES.map((category) => ({
+            ...category,
+            isSelected: savedCategories.includes(category.name),
+          }))
+        );
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+      }
+    };
+
+    loadSellerCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const toggleCategory = (index) => {
     setCategories((prev) => prev.map((item, itemIndex) => (itemIndex === index ? { ...item, isSelected: !item.isSelected } : item)));
   };
 
-  const continueToKyc = () => {
-    if (categories.some((item) => item.isSelected)) {
+  const continueToKyc = async () => {
+    const selectedCategories = categories.filter((item) => item.isSelected).map((item) => item.name);
+    if (selectedCategories.length === 0 || isSaving) return;
+
+    const seller = auth.currentUser;
+    if (!seller) {
+      navigate("/auth/login", { replace: true });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      await setDoc(doc(db, "sellers", seller.uid), {
+        categories: selectedCategories,
+        onboarding: {
+          businessInfoCompleted: true,
+          categoriesCompleted: true,
+          completedAt: new Date().toISOString(),
+        },
+      }, { merge: true });
+
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
+      setTimeout(() => navigate("/kyc-documents", { replace: true }), 500);
+    } catch (error) {
+      console.error("Failed to save categories:", error);
+      window.alert("Failed to save categories. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
-    setTimeout(() => navigate("/kyc-documents", { replace: true }), 500);
   };
 
   return (
@@ -81,8 +138,13 @@ function CategoriesScreen() {
               </article>
             ))}
 
-            <button type="button" className="flow-submit" onClick={continueToKyc}>
-              Continue to KYC
+            <button
+              type="button"
+              className="flow-submit"
+              onClick={continueToKyc}
+              disabled={!categories.some((item) => item.isSelected) || isSaving}
+            >
+              {isSaving ? "Saving..." : "Continue to KYC"}
             </button>
           </div>
         </section>

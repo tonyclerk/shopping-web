@@ -1,40 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SellerLayout from "../components/SellerLayout.jsx";
+import { useSellerInventoryProducts } from "../utils/inventory";
 import "./LowStockAlertsScreen.css";
-
-const LOW_STOCK_PRODUCTS = [
-  {
-    productName: "Formal Oxfords",
-    badge: "LOW STOCK",
-    badgeColor: "#D08700",
-    category: "Shoes",
-    brand: "Classic Footwear - Blue",
-    sku: "SKU: SKU21002",
-    stockLevel: "5 units",
-    stockLevelColor: "#D08700",
-    threshold: "Threshold: 10 units",
-    currentStock: "5 units",
-    minThreshold: "10 units",
-    sellingPrice: "$2,360",
-    progressValue: 0.5,
-  },
-  {
-    productName: "Leather Belt",
-    badge: "LOW STOCK",
-    badgeColor: "#D08700",
-    category: "Accessories",
-    brand: "Urban Style - Black",
-    sku: "SKU: SKU00001",
-    stockLevel: "8 units",
-    stockLevelColor: "#D08700",
-    threshold: "Threshold: 12 units",
-    currentStock: "8 units",
-    minThreshold: "12 units",
-    sellingPrice: "$1,290",
-    progressValue: 0.67,
-  },
-];
 
 const TIPS = [
   "Set appropriate minimum thresholds based on your sales velocity.",
@@ -43,8 +11,18 @@ const TIPS = [
   "Review and adjust thresholds seasonally for better planning.",
 ];
 
+const FILTERS = {
+  all: "Total Alerts",
+  out_of_stock: "Out of Stock",
+  very_low: "Very Low (<=2)",
+  low_stock: "Low Stock",
+};
+
 function LowStockAlertsScreen() {
   const navigate = useNavigate();
+  const { products, loading } = useSellerInventoryProducts();
+  const [activeFilter, setActiveFilter] = useState("all");
+
   const formattedDate = useMemo(
     () =>
       new Intl.DateTimeFormat("en-US", {
@@ -55,6 +33,28 @@ function LowStockAlertsScreen() {
       }).format(new Date()),
     [],
   );
+
+  const lowStockProducts = useMemo(
+    () => products.filter((product) => product.stock < product.threshold),
+    [products],
+  );
+
+  const outOfStockProducts = useMemo(
+    () => lowStockProducts.filter((product) => product.stock <= 0),
+    [lowStockProducts],
+  );
+
+  const veryLowProducts = useMemo(
+    () => lowStockProducts.filter((product) => product.stock > 0 && product.stock <= 2),
+    [lowStockProducts],
+  );
+
+  const filteredProducts = useMemo(() => {
+    if (activeFilter === "out_of_stock") return outOfStockProducts;
+    if (activeFilter === "very_low") return veryLowProducts;
+    if (activeFilter === "low_stock") return lowStockProducts.filter((product) => product.stock > 2);
+    return lowStockProducts;
+  }, [activeFilter, lowStockProducts, outOfStockProducts, veryLowProducts]);
 
   return (
     <SellerLayout selectedMenu="Inventory" title="Low Stock" subtitle={formattedDate} contentClassName="no-pad">
@@ -70,105 +70,157 @@ function LowStockAlertsScreen() {
           </div>
           <div>
             <h2>Low Stock Alerts</h2>
-            <p>Products below minimum stock threshold requiring attention</p>
+            <p>Products with stock below their configured threshold requiring attention</p>
           </div>
         </section>
 
         <section className="low-stock-stats-grid">
-          <StatCard label="Total Alerts" value="2" color="#0A0A0A" highlight />
-          <StatCard label="Out of Stock" value="0" color="#E7000B" />
-          <StatCard label="Very Low (<=2)" value="0" color="#F54900" />
-          <StatCard label="Low Stock" value="2" color="#D08700" />
+          <StatCard
+            label="Total Alerts"
+            value={String(lowStockProducts.length)}
+            color="#0A0A0A"
+            active={activeFilter === "all"}
+            onClick={() => setActiveFilter("all")}
+          />
+          <StatCard
+            label="Out of Stock"
+            value={String(outOfStockProducts.length)}
+            color="#E7000B"
+            active={activeFilter === "out_of_stock"}
+            onClick={() => setActiveFilter("out_of_stock")}
+          />
+          <StatCard
+            label="Very Low (<=2)"
+            value={String(veryLowProducts.length)}
+            color="#F54900"
+            active={activeFilter === "very_low"}
+            onClick={() => setActiveFilter("very_low")}
+          />
+          <StatCard
+            label="Low Stock"
+            value={String(lowStockProducts.filter((product) => product.stock > 2).length)}
+            color="#D08700"
+            active={activeFilter === "low_stock"}
+            onClick={() => setActiveFilter("low_stock")}
+          />
         </section>
 
         <section className="low-stock-products-list">
-          {LOW_STOCK_PRODUCTS.map((product) => {
-            const [brandName, color] = product.brand.split(" - ");
-            return (
-              <article key={product.sku} className="low-stock-product-card">
-                <div className="low-stock-product-thumb">IMG</div>
+          {loading ? (
+            <article className="low-stock-product-card">
+              <div className="low-stock-product-main">
+                <h3>Loading products...</h3>
+              </div>
+            </article>
+          ) : filteredProducts.length ? (
+            filteredProducts.map((product) => {
+              const stockTone = product.stock <= 0 ? "#E7000B" : product.stock <= 2 ? "#F54900" : "#D08700";
+              const price =
+                typeof product.sellingPrice === "number"
+                  ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(product.sellingPrice)
+                  : product.sellingPrice;
 
-                <div className="low-stock-product-main">
-                  <div className="low-stock-title-row">
-                    <h3>{product.productName}</h3>
-                    <span style={{ backgroundColor: product.badgeColor }}>{product.badge}</span>
+              return (
+                <article key={product.id} className="low-stock-product-card">
+                  <div className="low-stock-product-thumb">
+                    {product.imageUrl ? <img src={product.imageUrl} alt={product.name} /> : "IMG"}
                   </div>
 
-                  <div className="category-pill">{product.category}</div>
-                  <p className="brand-line">{product.brand}</p>
-                  <p className="sku-line">{product.sku}</p>
-
-                  <div className="stock-level-row">
-                    <p>Stock Level</p>
-                    <strong style={{ color: product.stockLevelColor }}>{product.stockLevel}</strong>
-                  </div>
-
-                  <progress max="1" value={product.progressValue} />
-                  <small>{product.threshold}</small>
-
-                  <div className="stock-grid">
-                    <div>
-                      <small>Current Stock</small>
-                      <strong style={{ color: product.stockLevelColor }}>{product.currentStock}</strong>
+                  <div className="low-stock-product-main">
+                    <div className="low-stock-title-row">
+                      <h3>{product.name}</h3>
+                      <span style={{ backgroundColor: stockTone }}>{product.stock <= 0 ? "OUT OF STOCK" : "LOW STOCK"}</span>
                     </div>
-                    <div>
-                      <small>Min. Threshold</small>
-                      <strong>{product.minThreshold}</strong>
+
+                    <div className="category-pill">{product.category || "Uncategorized"}</div>
+                    <p className="brand-line">{product.brand || "No brand"}</p>
+                    <p className="sku-line">SKU: {product.sku}</p>
+
+                    <div className="stock-level-row">
+                      <p>Stock Level</p>
+                      <strong style={{ color: stockTone }}>{product.stock} units</strong>
+                    </div>
+
+                    <progress max={Math.max(product.threshold, 1)} value={Math.max(product.stock, 0)} />
+                    <small>Threshold: {product.threshold} units</small>
+
+                    <div className="stock-grid">
+                      <div>
+                        <small>Current Stock</small>
+                        <strong style={{ color: stockTone }}>{product.stock} units</strong>
+                      </div>
+                      <div>
+                        <small>Min. Threshold</small>
+                        <strong>{product.threshold} units</strong>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="low-stock-product-side">
-                  <p>Selling Price</p>
-                  <h4>{product.sellingPrice}</h4>
+                  <div className="low-stock-product-side">
+                    <p>Selling Price</p>
+                    <h4>{price || "-"}</h4>
 
-                  <button
-                    type="button"
-                    className="dark-btn"
-                    onClick={() =>
-                      navigate("/add-stock", {
-                        state: {
-                          productName: product.productName,
-                          variant: color ?? "",
-                          sku: product.sku.replace("SKU: ", ""),
-                          category: product.category,
-                          brand: brandName ?? product.brand,
-                          sellingPrice: product.sellingPrice,
-                          currentStock: Number(product.currentStock.replace(" units", "")),
-                          minThreshold: Number(product.minThreshold.replace(" units", "")),
-                        },
-                      })
-                    }
-                  >
-                    Add Stock
-                  </button>
+                    <button
+                      type="button"
+                      className="dark-btn"
+                      onClick={() =>
+                        navigate("/add-stock", {
+                          state: {
+                            productId: product.id,
+                            productName: product.name,
+                            variant: product.variant,
+                            sku: product.sku,
+                            category: product.category,
+                            brand: product.brand,
+                            sellingPrice: price,
+                            currentStock: product.stock,
+                            minThreshold: product.threshold,
+                            imageUrl: product.imageUrl,
+                            raw: product.raw,
+                          },
+                        })
+                      }
+                    >
+                      Add Stock
+                    </button>
 
-                  <button
-                    type="button"
-                    className="light-btn"
-                    onClick={() =>
-                      navigate("/edit-product", {
-                        state: {
-                          productName: product.productName,
-                          brand: brandName ?? product.brand,
-                          category: product.category,
-                          sku: product.sku.replace("SKU: ", ""),
-                          size: "",
-                          color: color ?? "",
-                          description: "Product description...",
-                          sellingPrice: product.sellingPrice,
-                          currentStock: Number(product.currentStock.replace(" units", "")),
-                          openDialog: true,
-                        },
-                      })
-                    }
-                  >
-                    Edit Product
-                  </button>
-                </div>
-              </article>
-            );
-          })}
+                    <button
+                      type="button"
+                      className="light-btn"
+                      onClick={() =>
+                        navigate("/edit-product", {
+                          state: {
+                            productId: product.id,
+                            productName: product.name,
+                            brand: product.brand,
+                            category: product.category,
+                            sku: product.sku,
+                            size: "",
+                            color: "",
+                            description: product.raw?.description ?? "Product description...",
+                            sellingPrice: price,
+                            currentStock: product.stock,
+                            minThreshold: product.threshold,
+                            imageUrl: product.imageUrl,
+                            raw: product.raw,
+                          },
+                        })
+                      }
+                    >
+                      Edit Product
+                    </button>
+                  </div>
+                </article>
+              );
+            })
+          ) : (
+            <article className="low-stock-product-card">
+              <div className="low-stock-product-main">
+                <h3>No products in {FILTERS[activeFilter]}</h3>
+                <p>Select another filter or wait for inventory levels to change.</p>
+              </div>
+            </article>
+          )}
         </section>
 
         <section className="stock-tips-card">
@@ -184,12 +236,12 @@ function LowStockAlertsScreen() {
   );
 }
 
-function StatCard({ label, value, color, highlight = false }) {
+function StatCard({ label, value, color, active = false, onClick }) {
   return (
-    <article className={`low-stock-stat-card ${highlight ? "highlight" : ""}`}>
+    <button type="button" className={`low-stock-stat-card ${active ? "highlight" : ""}`} onClick={onClick}>
       <p>{label}</p>
       <h3 style={{ color }}>{value}</h3>
-    </article>
+    </button>
   );
 }
 

@@ -65,7 +65,24 @@ const formatStatusLabel = (status) => {
   return status.replace(/_/g, " ");
 };
 
-const normalizeStatus = (status) => STATUS_ALIASES[status] ?? status ?? "pending";
+const hasTimestampValue = (value) => {
+  if (!value) return false;
+  if (typeof value?.toDate === "function") return true;
+  if (value instanceof Date) return true;
+  return typeof value === "string" || typeof value === "number";
+};
+
+const normalizeOrderStatus = (order) => {
+  const rawStatus = STATUS_ALIASES[order?.status] ?? order?.status ?? "pending";
+
+  // Some new orders are persisted as "placed" before the seller has acted on them.
+  // Treat those as pending until the seller updates the order at least once.
+  if (rawStatus === "placed" && !hasTimestampValue(order?.updatedAt)) {
+    return "pending";
+  }
+
+  return rawStatus;
+};
 
 const getNonEmptyString = (...values) => {
   for (const value of values) {
@@ -88,6 +105,12 @@ const getCustomerId = (order) =>
     order.customer?.uid,
     order.customerUid,
   );
+
+const parseAmount = (value) => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value === "string") return Number(value.replace(/[^0-9.-]/g, "")) || 0;
+  return 0;
+};
 
 function EyeIcon() {
   return (
@@ -146,7 +169,7 @@ function ActionIcon({ icon }) {
 }
 
 function ActionButtons({ order, onView, onUpdateStatus, showView = true }) {
-  const actions = ACTION_CONFIG[normalizeStatus(order.status)] ?? [];
+  const actions = ACTION_CONFIG[order.status] ?? [];
 
   return (
     <div className="order-actions">
@@ -242,12 +265,13 @@ export default function OrderManagementScreen() {
 
                 return {
                   ...order,
-                  status: normalizeStatus(order.status),
+                  status: normalizeOrderStatus(order),
                   items: sellerItems,
                   sellerSubtotal: sellerItems.reduce(
                     (sum, item) => sum + Number(item.price ?? 0) * Number(item.quantity ?? 0),
                     0,
                   ),
+                  sellerEarnings: parseAmount(order.total),
                   customerName: getNonEmptyString(
                     order.customerName,
                     order.customer?.displayName,
@@ -349,8 +373,8 @@ export default function OrderManagementScreen() {
                 {filteredOrders.map((order) => {
                   const badge = STATUS_STYLE[order.status] ?? STATUS_STYLE.pending;
 
-                  return (
-                    <tr key={order.id}>
+                return (
+                  <tr key={order.id}>
                       <td>
                         <p className="order-id">{order.orderNumber ?? order.id.slice(0, 8).toUpperCase()}</p>
                         <p className="order-date">{formatDate(order.createdAt)}</p>
@@ -362,7 +386,7 @@ export default function OrderManagementScreen() {
                         </div>
                       </td>
                       <td>{order.items.length} item{order.items.length !== 1 ? "s" : ""}</td>
-                      <td className="earnings">${order.sellerSubtotal.toFixed(2)}</td>
+                      <td className="earnings">${(order.sellerEarnings ?? order.sellerSubtotal).toFixed(2)}</td>
                       <td>
                         <span className="order-status" style={{ background: badge.background, color: badge.color }}>
                           {formatStatusLabel(order.status)}
@@ -394,6 +418,7 @@ export default function OrderManagementScreen() {
 
 function OrderDetailModal({ order, onClose, onUpdateStatus }) {
   const badge = STATUS_STYLE[order.status] ?? STATUS_STYLE.pending;
+  const earningsAmount = order.sellerEarnings ?? order.sellerSubtotal;
 
   return (
     <div className="order-detail-modal-overlay" onClick={onClose}>
@@ -460,11 +485,15 @@ function OrderDetailModal({ order, onClose, onUpdateStatus }) {
             <span>Items subtotal</span>
             <span>${order.sellerSubtotal.toFixed(2)}</span>
           </div>
+          <div className="order-detail-price-line">
+            <span>Order total</span>
+            <span>${earningsAmount.toFixed(2)}</span>
+          </div>
         </div>
 
         <div className="order-detail-earnings-row">
           <p>Your Earnings</p>
-          <strong>${order.sellerSubtotal.toFixed(2)}</strong>
+          <strong>${earningsAmount.toFixed(2)}</strong>
         </div>
 
         <div className="order-detail-actions">

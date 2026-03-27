@@ -208,11 +208,22 @@
 .profile-category-chip {
   margin-top: 10px;
   width: fit-content;
+  border: 1px solid transparent;
   border-radius: 8px;
   background: #e0e7ff;
   color: #4f39f6;
   font-size: 11px;
   padding: 5px 10px;
+  cursor: default;
+}
+
+.profile-category-chip.active {
+  background: #030213;
+  color: #fff;
+}
+
+button.profile-category-chip {
+  cursor: pointer;
 }
 
 .profile-section-divider {

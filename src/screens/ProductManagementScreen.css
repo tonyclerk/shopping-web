@@ -132,9 +132,26 @@
   margin-left: 6px;
 }
 
+.table-action.primary {
+  background: #030213;
+  border-color: #030213;
+  color: #fff;
+}
+
 .table-action.danger {
   border-color: #fecaca;
   color: #b91c1c;
+}
+
+.action-group {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.action-group .table-action {
+  margin-left: 0;
 }
 
 .dialog-overlay {
@@ -217,6 +234,27 @@
 
 .dialog-body textarea {
   min-height: 72px;
+}
+
+.dialog-body .dialog-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.dialog-body .dialog-checkbox-row input[type="checkbox"] {
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  min-height: 16px;
+  margin: 0;
+  padding: 0;
+  border-radius: 4px;
+  accent-color: #030213;
+  background: transparent;
 }
 
 .dialog-grid-2 {

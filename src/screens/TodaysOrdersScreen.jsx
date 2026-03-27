@@ -1,23 +1,47 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import SellerLayout from "../components/SellerLayout.jsx";
+import { useSellerOrders } from "../utils/orders";
 import "./TodaysOrdersScreen.css";
 
-const SUMMARY = [
-  { label: "Total Orders", value: "24", color: "#155DFC" },
-  { label: "Total Revenue", value: "$61,384", color: "#00A63E" },
-  { label: "Average Order Value", value: "$2,558", color: "#155DFC" },
-];
+function getStartOfToday() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
 
-const ORDERS = [
-  { id: "Order #96851178", customer: "New Customer 259", items: "1 item", time: "2:24:11 AM", product: "Running Shoes - M - Black", qty: 1, subtotal: "$2,124", earnings: "$1,805" },
-  { id: "Order #96131170", customer: "New Customer 258", items: "1 item", time: "2:12:11 AM", product: "Running Shoes - M - Black", qty: 2, subtotal: "$4,248", earnings: "$3,611" },
-  { id: "Order #95893173", customer: "New Customer 556", items: "1 item", time: "2:08:13 AM", product: "Smart Watch Pro - Black", qty: 1, subtotal: "$2,124", earnings: "$1,805" },
-  { id: "Order #95772174", customer: "New Customer 338", items: "1 item", time: "2:06:12 AM", product: "Smart Watch Pro - Black", qty: 1, subtotal: "$2,124", earnings: "$1,805" },
-];
+function formatCurrency(value) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(Number(value) || 0);
+}
+
+function formatTime(date) {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(date);
+}
+
+function getPrimaryItem(order) {
+  return order.items?.[0] ?? {};
+}
+
+function getOrderBadge(order) {
+  if (order.status === "pending") return "NEW";
+  if (order.status === "accepted") return "ACCEPTED";
+  if (order.status === "placed") return "PACKED";
+  if (order.status === "delivered") return "DELIVERED";
+  if (order.status === "cancelled") return "CANCELLED";
+  return String(order.status || "ORDER").toUpperCase();
+}
 
 function TodaysOrdersScreen() {
   const navigate = useNavigate();
+  const { orders, loading } = useSellerOrders();
+
   const formattedDate = useMemo(
     () =>
       new Intl.DateTimeFormat("en-US", {
@@ -28,6 +52,46 @@ function TodaysOrdersScreen() {
       }).format(new Date()),
     [],
   );
+
+  const todaysOrders = useMemo(() => {
+    const startOfToday = getStartOfToday();
+    const endOfToday = new Date(startOfToday);
+    endOfToday.setDate(endOfToday.getDate() + 1);
+
+    return orders
+      .filter((order) => order.createdAtDate && order.createdAtDate >= startOfToday && order.createdAtDate < endOfToday)
+      .map((order) => {
+        const primaryItem = getPrimaryItem(order);
+        return {
+          ...order,
+          customer: order.customerName ?? order.customer?.displayName ?? order.customer?.name ?? "Customer",
+          itemsLabel: `${order.items.length} item${order.items.length !== 1 ? "s" : ""}`,
+          timeLabel: formatTime(order.createdAtDate),
+          productName: primaryItem.title ?? "Product",
+          qty: order.quantitySold || primaryItem.quantity || 0,
+          subtotal: order.finalPaidAmount,
+          earnings: order.finalPaidAmount,
+          productVariant: [primaryItem.size ? `Size: ${primaryItem.size}` : null, primaryItem.color ? `Color: ${primaryItem.color}` : null]
+            .filter(Boolean)
+            .join(", "),
+          sku: primaryItem.sku ?? "SKU00001",
+          customerPhone: order.customerPhone ?? order.customer?.phone ?? order.phone ?? "+1 234 567 8900",
+          deliveryAddress: order.shippingAddress ?? order.deliveryAddress ?? order.customerAddress ?? "Address not available",
+        };
+      });
+  }, [orders]);
+
+  const summary = useMemo(() => {
+    const totalOrders = todaysOrders.length;
+    const totalRevenue = todaysOrders.reduce((sum, order) => sum + Number(order.finalPaidAmount ?? 0), 0);
+    const averageOrderValue = totalOrders ? totalRevenue / totalOrders : 0;
+
+    return [
+      { label: "Total Orders", value: String(totalOrders), color: "#155DFC" },
+      { label: "Total Revenue", value: formatCurrency(totalRevenue), color: "#00A63E" },
+      { label: "Average Order Value", value: formatCurrency(averageOrderValue), color: "#155DFC" },
+    ];
+  }, [todaysOrders]);
 
   return (
     <SellerLayout selectedMenu="Dashboard" title="Today's Orders" subtitle={formattedDate} contentClassName="no-pad">
@@ -43,12 +107,12 @@ function TodaysOrdersScreen() {
           </div>
           <div>
             <h2>Today&apos;s Orders</h2>
-            <p>{new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(new Date())}</p>
+            <p>{formattedDate}</p>
           </div>
         </section>
 
         <section className="today-orders-summary-grid">
-          {SUMMARY.map((card) => (
+          {summary.map((card) => (
             <article key={card.label} className="today-orders-summary-card">
               <p>{card.label}</p>
               <h3 style={{ color: card.color }}>{card.value}</h3>
@@ -59,68 +123,82 @@ function TodaysOrdersScreen() {
         <section className="today-orders-list-card">
           <div className="today-orders-list-head">
             <div>
-              <h3>All Orders (24)</h3>
+              <h3>All Orders ({todaysOrders.length})</h3>
               <p>Complete list of today&apos;s orders</p>
             </div>
-            <button type="button">Export</button>
+            <button type="button" onClick={() => window.print()}>Export</button>
           </div>
 
           <div className="today-orders-list">
-            {ORDERS.map((order) => (
-              <article key={order.id} className="today-order-item">
+            {loading ? (
+              <article className="today-order-item">
                 <div className="today-order-main">
-                  <div className="today-order-top-row">
-                    <h4>{order.id}</h4>
-                    <span>NEW</span>
-                  </div>
-                  <div className="today-order-meta-row">
-                    <p>Customer: {order.customer}</p>
-                    <p>Items: {order.items}</p>
-                  </div>
-                  <p className="today-order-time">Time: {order.time}</p>
-                  <div className="today-order-product">
-                    <p>
-                      {order.product} x{order.qty}
-                    </p>
-                    <strong>{order.subtotal}</strong>
-                  </div>
-                </div>
-
-                <div className="today-order-earnings">
-                  <p>Your Earnings</p>
-                  <h5>{order.earnings}</h5>
-                  <div className="today-order-breakdown">
-                    <span>Subtotal: {order.subtotal}</span>
-                    <span>Tax: $382</span>
-                    <span className="negative">Commission: -$319</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate("/order-details", {
-                        state: {
-                          orderNumber: order.id,
-                          customerName: order.customer,
-                          customerPhone: "+1 234 567 8900",
-                          deliveryAddress: "123 Main St, Apt 4B, New York, NY 10001",
-                          earnings: Number(order.earnings.replace(/[$,]/g, "")),
-                          subtotal: Number(order.subtotal.replace(/[$,]/g, "")),
-                          orderDate: new Date().toISOString(),
-                          totalItems: Number(order.qty),
-                          paymentMethod: "Credit Card",
-                          isNewOrder: true,
-                          productName: order.product,
-                          productVariant: "Size: L, Color: Blue",
-                          sku: "TS-001",
-                        },
-                      })
-                    }
-                  >
-                    View Details
-                  </button>
+                  <h4>Loading today&apos;s orders...</h4>
                 </div>
               </article>
-            ))}
+            ) : todaysOrders.length ? (
+              todaysOrders.map((order) => (
+                <article key={order.id} className="today-order-item">
+                  <div className="today-order-main">
+                    <div className="today-order-top-row">
+                      <h4>{order.orderNumber ?? order.id}</h4>
+                      <span>{getOrderBadge(order)}</span>
+                    </div>
+                    <div className="today-order-meta-row">
+                      <p>Customer: {order.customer}</p>
+                      <p>Items: {order.itemsLabel}</p>
+                    </div>
+                    <p className="today-order-time">Time: {order.timeLabel}</p>
+                    <div className="today-order-product">
+                      <p>
+                        {order.productName} x{order.qty}
+                      </p>
+                      <strong>{formatCurrency(order.subtotal)}</strong>
+                    </div>
+                  </div>
+
+                  <div className="today-order-earnings">
+                    <p>Your Earnings</p>
+                    <h5>{formatCurrency(order.earnings)}</h5>
+                    <div className="today-order-breakdown">
+                      <span>Subtotal: {formatCurrency(order.subtotal)}</span>
+                      <span>Qty Sold: {order.qty}</span>
+                      <span className="negative">Status: {getOrderBadge(order)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate("/order-details", {
+                          state: {
+                            orderNumber: order.orderNumber ?? order.id,
+                            customerName: order.customer,
+                            customerPhone: order.customerPhone,
+                            deliveryAddress: order.deliveryAddress,
+                            earnings: Number(order.earnings ?? 0),
+                            subtotal: Number(order.subtotal ?? 0),
+                            orderDate: order.createdAtDate?.toISOString?.() ?? new Date().toISOString(),
+                            totalItems: Number(order.qty),
+                            paymentMethod: order.paymentMethod ?? "Credit Card",
+                            isNewOrder: order.status === "pending",
+                            productName: order.productName,
+                            productVariant: order.productVariant || "Variant not available",
+                            sku: order.sku,
+                          },
+                        })
+                      }
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <article className="today-order-item">
+                <div className="today-order-main">
+                  <h4>No orders received today</h4>
+                </div>
+              </article>
+            )}
           </div>
         </section>
       </main>

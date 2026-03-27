@@ -37,6 +37,11 @@ function SignupScreen() {
         name: name,
         email: email,
         role: "seller",
+        categories: [],
+        onboarding: {
+          businessInfoCompleted: false,
+          categoriesCompleted: false,
+        },
         createdAt: new Date()
       });
 

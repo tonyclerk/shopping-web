@@ -1,9 +1,10 @@
 .seller-shell {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 255px 1fr;
   background: #f9fafb;
   color: #0a0a0a;
+  overflow: hidden;
 }
 
 .seller-mobile-menu {
@@ -15,6 +16,10 @@
   border-right: 1px solid rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .seller-sidebar-header {
@@ -153,7 +158,8 @@
 .seller-main {
   min-width: 0;
   display: grid;
-  grid-template-rows: 93px 1fr;
+  grid-template-rows: 93px minmax(0, 1fr);
+  height: 100vh;
 }
 
 .seller-header {
@@ -192,6 +198,8 @@
 
 .seller-content {
   padding: 24px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .seller-content.no-pad {
@@ -200,7 +208,9 @@
 
 @media (max-width: 768px) {
   .seller-shell {
+    height: auto;
     grid-template-columns: 1fr;
+    overflow: visible;
   }
 
   .seller-mobile-menu {
@@ -233,6 +243,7 @@
 
   .seller-main {
     grid-template-rows: auto 1fr;
+    height: auto;
   }
 
   .seller-header {

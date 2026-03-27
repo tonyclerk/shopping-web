@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { getSellerNextRoute } from "../utils/sellerProfile";
 
 function WebLoginScreen() {
   const navigate = useNavigate();
@@ -20,11 +21,12 @@ function WebLoginScreen() {
       const sellerDoc = await getDoc(doc(db, "sellers", user.uid));
 
       if (!sellerDoc.exists()) {
+        await signOut(auth);
         alert("Not a seller account");
         return;
       }
 
-      navigate("/login");
+      navigate(getSellerNextRoute(sellerDoc.data()), { replace: true });
     } catch (err) {
       console.log(err);
       alert("Login failed");
@@ -35,7 +37,7 @@ function WebLoginScreen() {
     <main className="page">
       <section className="card">
         <h1 className="title">Login</h1>
-        <p className="subtitle">Sign in with email, then continue to phone verification.</p>
+        <p className="subtitle">Sign in to access your seller dashboard.</p>
 
         <label className="label">Email</label>
         <input

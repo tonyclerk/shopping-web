@@ -111,6 +111,14 @@
   font-size: 11px;
 }
 
+.low-stock-thumb img,
+.inventory-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
 .low-stock-text p {
   margin: 0;
   font-size: 14px;

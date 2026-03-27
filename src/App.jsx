@@ -26,38 +26,92 @@ import RequestCategoriesScreen from "./screens/RequestCategoriesScreen.jsx";
 import WelcomeScreen from "./screens/WelcomeScreen.jsx";
 import WebLoginScreen from "./screens/WebLoginScreen.jsx";
 import SignupScreen from "./screens/SignupScreen.jsx";
+import useSellerSession from "./hooks/useSellerSession.js";
+import { getSellerNextRoute, hasCompletedCategories, isBusinessInfoComplete } from "./utils/sellerProfile.js";
+
+function RouteLoader() {
+  return (
+    <main className="page">
+      <section className="card">
+        <h1 className="title">Loading</h1>
+        <p className="subtitle">Checking your seller session...</p>
+      </section>
+    </main>
+  );
+}
+
+function PublicOnlyRoute({ children }) {
+  const { loading, user, seller } = useSellerSession();
+
+  if (loading) return <RouteLoader />;
+  if (user) return <Navigate to={getSellerNextRoute(seller ?? {})} replace />;
+  return children;
+}
+
+function ProtectedRoute({ children }) {
+  const { loading, user } = useSellerSession();
+
+  if (loading) return <RouteLoader />;
+  if (!user) return <Navigate to="/auth/login" replace />;
+  return children;
+}
+
+function OnboardingBusinessRoute({ children }) {
+  const { loading, user, seller } = useSellerSession();
+
+  if (loading) return <RouteLoader />;
+  if (!user) return <Navigate to="/auth/login" replace />;
+  if (isBusinessInfoComplete(seller ?? {})) {
+    return <Navigate to={getSellerNextRoute(seller ?? {})} replace />;
+  }
+
+  return children;
+}
+
+function OnboardingCategoriesRoute({ children }) {
+  const { loading, user, seller } = useSellerSession();
+
+  if (loading) return <RouteLoader />;
+  if (!user) return <Navigate to="/auth/login" replace />;
+  if (!isBusinessInfoComplete(seller ?? {})) return <Navigate to="/onboarding" replace />;
+  if (hasCompletedCategories(seller ?? {})) {
+    return <Navigate to={getSellerNextRoute(seller ?? {})} replace />;
+  }
+
+  return children;
+}
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<WelcomeScreen />} />
+      <Route path="/" element={<PublicOnlyRoute><WelcomeScreen /></PublicOnlyRoute>} />
       <Route path="/welcome" element={<Navigate to="/" replace />} />
-      <Route path="/auth/login" element={<WebLoginScreen />} />
-      <Route path="/auth/signup" element={<SignupScreen />} />
-      <Route path="/login" element={<LoginScreen />} />
-      <Route path="/verify-otp" element={<OtpVerificationScreen />} />
-      <Route path="/onboarding" element={<OnboardingScreen />} />
-      <Route path="/categories" element={<CategoriesScreen />} />
-      <Route path="/kyc-documents" element={<KycDocumentsScreen />} />
-      <Route path="/approval-pending" element={<ApprovalPendingScreen />} />
-      <Route path="/dashboard" element={<DashboardScreen />} />
-      <Route path="/todays-orders" element={<TodaysOrdersScreen />} />
-      <Route path="/todays-revenue" element={<TodaysRevenueScreen />} />
-      <Route path="/order-details" element={<OrderDetailsScreen />} />
-      <Route path="/pending-fulfillment" element={<PendingFulfillmentScreen />} />
-      <Route path="/low-stock-alerts" element={<LowStockAlertsScreen />} />
-      <Route path="/edit-product" element={<EditProductScreen />} />
-      <Route path="/notifications" element={<NotificationScreen />} />
-      <Route path="/products" element={<ProductManagementScreen />} />
-      <Route path="/inventory" element={<InventoryManagementScreen />} />
-      <Route path="/add-stock" element={<AddStockScreen />} />
-      <Route path="/orders" element={<OrderManagementScreen />} />
-      <Route path="/cancellations" element={<CancellationsScreen />} />
-      <Route path="/payments" element={<PaymentsScreen />} />
-      <Route path="/returns" element={<Navigate to="/returns-management" replace />} />
-      <Route path="/returns-management" element={<ReturnsManagementScreen />} />
-      <Route path="/profile" element={<ProfileScreen />} />
-      <Route path="/request-categories" element={<RequestCategoriesScreen />} />
+      <Route path="/auth/login" element={<PublicOnlyRoute><WebLoginScreen /></PublicOnlyRoute>} />
+      <Route path="/auth/signup" element={<PublicOnlyRoute><SignupScreen /></PublicOnlyRoute>} />
+      <Route path="/login" element={<PublicOnlyRoute><LoginScreen /></PublicOnlyRoute>} />
+      <Route path="/verify-otp" element={<PublicOnlyRoute><OtpVerificationScreen /></PublicOnlyRoute>} />
+      <Route path="/onboarding" element={<OnboardingBusinessRoute><OnboardingScreen /></OnboardingBusinessRoute>} />
+      <Route path="/categories" element={<OnboardingCategoriesRoute><CategoriesScreen /></OnboardingCategoriesRoute>} />
+      <Route path="/kyc-documents" element={<ProtectedRoute><KycDocumentsScreen /></ProtectedRoute>} />
+      <Route path="/approval-pending" element={<ProtectedRoute><ApprovalPendingScreen /></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardScreen /></ProtectedRoute>} />
+      <Route path="/todays-orders" element={<ProtectedRoute><TodaysOrdersScreen /></ProtectedRoute>} />
+      <Route path="/todays-revenue" element={<ProtectedRoute><TodaysRevenueScreen /></ProtectedRoute>} />
+      <Route path="/order-details" element={<ProtectedRoute><OrderDetailsScreen /></ProtectedRoute>} />
+      <Route path="/pending-fulfillment" element={<ProtectedRoute><PendingFulfillmentScreen /></ProtectedRoute>} />
+      <Route path="/low-stock-alerts" element={<ProtectedRoute><LowStockAlertsScreen /></ProtectedRoute>} />
+      <Route path="/edit-product" element={<ProtectedRoute><EditProductScreen /></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute><NotificationScreen /></ProtectedRoute>} />
+      <Route path="/products" element={<ProtectedRoute><ProductManagementScreen /></ProtectedRoute>} />
+      <Route path="/inventory" element={<ProtectedRoute><InventoryManagementScreen /></ProtectedRoute>} />
+      <Route path="/add-stock" element={<ProtectedRoute><AddStockScreen /></ProtectedRoute>} />
+      <Route path="/orders" element={<ProtectedRoute><OrderManagementScreen /></ProtectedRoute>} />
+      <Route path="/cancellations" element={<ProtectedRoute><CancellationsScreen /></ProtectedRoute>} />
+      <Route path="/payments" element={<ProtectedRoute><PaymentsScreen /></ProtectedRoute>} />
+      <Route path="/returns" element={<ProtectedRoute><Navigate to="/returns-management" replace /></ProtectedRoute>} />
+      <Route path="/returns-management" element={<ProtectedRoute><ReturnsManagementScreen /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
+      <Route path="/request-categories" element={<ProtectedRoute><RequestCategoriesScreen /></ProtectedRoute>} />
       <Route path="*" element={<NotFoundScreen />} />
     </Routes>
   );

@@ -11,10 +11,28 @@ const EMPTY_VARIANT = {
   discount: "0",
 };
 
+const CATEGORY_OPTIONS = ["Accessories", "Clothing", "Shoes", "Watches", "Eyewear", "Bags", "Beauty"];
+
+const SUBCATEGORY_OPTIONS = {
+  Accessories: ["Jewelry", "Belts", "Wallets"],
+  Shoes: ["Sneakers", "Boots", "Heels", "Sandals", "Loafers"],
+  Watches: ["Luxury", "Smartwatch", "Sports", "Casual", "Chronograph"],
+  Eyewear: ["Sunglasses", "Reading", "Blue Light", "Aviator", "Round"],
+  Bags: ["Handbags", "Backpacks", "Tote Bags", "Crossbody", "Travel"],
+  Beauty: ["Skincare", "Makeup", "Haircare", "Fragrance", "Nails"],
+};
+
+const CLOTHING_SUBCATEGORY_OPTIONS = {
+  men: ["Shirts", "T-Shirts", "Pants", "Outerwear", "Jeans"],
+  women: ["Dresses", "Tops", "Skirts", "Outerwear", "Jeans"],
+};
+
 function EditProductDialog({ initialProduct, onClose, onSave }) {
   const [name, setName] = useState(initialProduct.productName ?? "");
   const [description, setDescription] = useState(initialProduct.description ?? "Product description...");
   const [category, setCategory] = useState(initialProduct.category ?? "Accessories");
+  const [gender, setGender] = useState(initialProduct.gender ?? "");
+  const [subcategory, setSubcategory] = useState(initialProduct.subcategory ?? "");
   const [brand, setBrand] = useState(initialProduct.brand ?? "");
   const [variants, setVariants] = useState([
     { ...EMPTY_VARIANT, sku: initialProduct.sku ?? "SKU00001", color: initialProduct.color ?? "Blue", stock: String(initialProduct.currentStock ?? 0), mrp: "2999", basePrice: "2499", discount: "15" },
@@ -22,6 +40,22 @@ function EditProductDialog({ initialProduct, onClose, onSave }) {
   ]);
 
   const totalStock = useMemo(() => variants.reduce((sum, item) => sum + (Number(item.stock) || 0), 0), [variants]);
+
+  const subcategoryOptions = useMemo(() => {
+    if (!category) return [];
+
+    if (category === "Clothing") {
+      if (gender === "men" || gender === "women") return CLOTHING_SUBCATEGORY_OPTIONS[gender];
+      if (gender === "unisex") {
+        return [...new Set([...CLOTHING_SUBCATEGORY_OPTIONS.men, ...CLOTHING_SUBCATEGORY_OPTIONS.women])];
+      }
+      return [];
+    }
+
+    return SUBCATEGORY_OPTIONS[category] ?? [];
+  }, [category, gender]);
+
+  const selectedSubcategory = subcategoryOptions.includes(subcategory) ? subcategory : "";
 
   const finalPrice = (variant) => {
     const basePrice = Number(variant.basePrice) || 0;
@@ -39,11 +73,21 @@ function EditProductDialog({ initialProduct, onClose, onSave }) {
       window.alert("Product name is required.");
       return;
     }
+    if (!gender) {
+      window.alert("Please select a gender/audience.");
+      return;
+    }
+    if (!selectedSubcategory) {
+      window.alert("Subcategory is required.");
+      return;
+    }
 
     onSave({
       productName: name.trim(),
       description: description.trim(),
       category,
+      gender,
+      subcategory: selectedSubcategory,
       brand: brand.trim(),
       variants,
       currentStock: totalStock,
@@ -77,16 +121,50 @@ function EditProductDialog({ initialProduct, onClose, onSave }) {
           <div className="edit-dialog-grid">
             <label>
               Category *
-              <select value={category} onChange={(event) => setCategory(event.target.value)}>
-                <option>Accessories</option>
-                <option>Clothing</option>
-                <option>Shoes</option>
-                <option>Watches</option>
+              <select
+                value={category}
+                onChange={(event) => {
+                  setCategory(event.target.value);
+                  setSubcategory("");
+                }}
+              >
+                {CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
             </label>
             <label>
               Brand
               <input value={brand} onChange={(event) => setBrand(event.target.value)} />
+            </label>
+          </div>
+
+          <div className="edit-dialog-grid">
+            <label>
+              Gender / Audience *
+              <select
+                value={gender}
+                onChange={(event) => {
+                  setGender(event.target.value);
+                  setSubcategory("");
+                }}
+              >
+                <option value="">Select audience</option>
+                <option value="men">Men</option>
+                <option value="women">Women</option>
+                <option value="unisex">Unisex</option>
+              </select>
+            </label>
+            <label>
+              Subcategory *
+              <select
+                value={selectedSubcategory}
+                onChange={(event) => setSubcategory(event.target.value)}
+                disabled={!subcategoryOptions.length}
+              >
+                <option value="">
+                  {category === "Clothing" && !gender ? "Select audience first" : "Select subcategory"}
+                </option>
+                {subcategoryOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
             </label>
           </div>
 

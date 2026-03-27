@@ -1,30 +1,36 @@
 import { useMemo, useState } from "react";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { useLocation, useNavigate } from "react-router-dom";
 import SellerLayout from "../components/SellerLayout.jsx";
+import { db } from "../firebase";
+import { buildStockUpdatePayload, DEFAULT_STOCK_THRESHOLD } from "../utils/inventory";
 import "./AddStockScreen.css";
 
-const FALLBACK_PRODUCT = {
-  productName: "Formal Oxfords",
-  variant: "Color: Blue, Size: L",
-  sku: "SKU21002",
-  category: "Shoes",
-  brand: "Classic Footwear",
-  sellingPrice: "$2360",
-  currentStock: 5,
-  minThreshold: 10,
+const EMPTY_PRODUCT = {
+  productId: "",
+  productName: "",
+  variant: "",
+  sku: "",
+  category: "",
+  brand: "",
+  sellingPrice: "",
+  currentStock: 0,
+  minThreshold: DEFAULT_STOCK_THRESHOLD,
+  imageUrl: "",
 };
 
 function AddStockScreen() {
   const navigate = useNavigate();
   const location = useLocation();
-  const product = { ...FALLBACK_PRODUCT, ...(location.state ?? {}) };
+  const product = { ...EMPTY_PRODUCT, ...(location.state ?? {}) };
 
   const [quantity, setQuantity] = useState("");
-  const [threshold, setThreshold] = useState(String(product.minThreshold));
+  const [threshold, setThreshold] = useState(String(product.minThreshold || DEFAULT_STOCK_THRESHOLD));
   const [supplier, setSupplier] = useState("");
   const [invoice, setInvoice] = useState("");
   const [cost, setCost] = useState("");
   const [notes, setNotes] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const formattedDate = useMemo(
     () =>
@@ -38,23 +44,48 @@ function AddStockScreen() {
   );
 
   const currentStock = Number(product.currentStock) || 0;
-  const minThreshold = Number(product.minThreshold) || 0;
+  const minThreshold = Number(threshold) || DEFAULT_STOCK_THRESHOLD;
   const quantityNumber = Number(quantity) || 0;
   const nextStock = currentStock + quantityNumber;
   const belowMinimum = Math.max(minThreshold - currentStock, 0);
 
-  const stockLevel = currentStock === 0 ? "OUT OF STOCK" : currentStock <= 2 ? "VERY LOW" : currentStock <= minThreshold ? "LOW" : "GOOD";
-  const stockTone = currentStock === 0 ? "danger" : currentStock <= 2 ? "critical" : currentStock <= minThreshold ? "warning" : "ok";
+  const stockLevel = currentStock === 0 ? "OUT OF STOCK" : currentStock <= 2 ? "VERY LOW" : currentStock < minThreshold ? "LOW" : "GOOD";
+  const stockTone = currentStock === 0 ? "danger" : currentStock <= 2 ? "critical" : currentStock < minThreshold ? "warning" : "ok";
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
+    if (!product.productId) {
+      window.alert("Product details are missing.");
+      return;
+    }
     if (!quantityNumber || quantityNumber < 1) {
       window.alert("Enter stock quantity greater than 0.");
       return;
     }
 
-    window.alert(`Stock updated for ${product.productName}. New stock: ${nextStock} units.`);
-    navigate("/inventory");
+    setIsSaving(true);
+    try {
+      await updateDoc(doc(db, "products", product.productId), {
+        ...buildStockUpdatePayload(
+          { raw: location.state?.raw ?? {} },
+          nextStock,
+          minThreshold,
+        ),
+        supplier: supplier || null,
+        invoiceNumber: invoice || null,
+        costPerUnit: cost ? Number(cost) : null,
+        stockNotes: notes || null,
+        updatedAt: serverTimestamp(),
+      });
+
+      window.alert(`Stock updated for ${product.productName}. New stock: ${nextStock} units.`);
+      navigate("/inventory");
+    } catch (error) {
+      console.error("Add stock failed:", error);
+      window.alert("Failed to update stock.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -71,7 +102,7 @@ function AddStockScreen() {
           </div>
           <div>
             <h2>Add Stock</h2>
-            <p>Restock inventory for {product.productName}</p>
+            <p>Restock inventory for {product.productName || "selected product"}</p>
           </div>
         </section>
 
@@ -89,7 +120,7 @@ function AddStockScreen() {
                 </label>
                 <label>
                   New Threshold
-                  <input value={threshold} onChange={(event) => setThreshold(event.target.value)} inputMode="numeric" placeholder="0" />
+                  <input value={threshold} onChange={(event) => setThreshold(event.target.value)} inputMode="numeric" placeholder="5" />
                 </label>
               </div>
               <div className="next-stock-banner">
@@ -130,10 +161,10 @@ function AddStockScreen() {
               </label>
 
               <div className="action-row">
-                <button type="submit" className="add-stock-submit-btn">
-                  Add Stock to Inventory
+                <button type="submit" className="add-stock-submit-btn" disabled={isSaving || !product.productId}>
+                  {isSaving ? "Saving..." : "Add Stock to Inventory"}
                 </button>
-                <button type="button" className="add-stock-cancel-btn" onClick={() => navigate("/inventory")}>
+                <button type="button" className="add-stock-cancel-btn" onClick={() => navigate("/inventory")} disabled={isSaving}>
                   Cancel
                 </button>
               </div>
@@ -146,14 +177,16 @@ function AddStockScreen() {
                 <img src="/icons/products.svg" alt="" />
                 <h3>Product Details</h3>
               </div>
-              <div className="product-image-placeholder">IMG</div>
+              <div className="product-image-placeholder">
+                {product.imageUrl ? <img src={product.imageUrl} alt={product.productName} /> : "IMG"}
+              </div>
               <div className="kv-list">
-                <KvRow label="Product Name" value={product.productName} />
-                <KvRow label="Variant" value={product.variant} />
-                <KvRow label="SKU" value={product.sku} mono />
-                <KvRow label="Category" value={product.category} />
-                <KvRow label="Brand" value={product.brand} />
-                <KvRow label="Selling Price" value={product.sellingPrice} big />
+                <KvRow label="Product Name" value={product.productName || "-"} />
+                <KvRow label="Variant" value={product.variant || "Default variant"} />
+                <KvRow label="SKU" value={product.sku || "-"} mono />
+                <KvRow label="Category" value={product.category || "-"} />
+                <KvRow label="Brand" value={product.brand || "-"} />
+                <KvRow label="Selling Price" value={product.sellingPrice || "-"} big />
               </div>
             </section>
 
@@ -174,7 +207,7 @@ function AddStockScreen() {
               </div>
 
               <ul className="status-meta">
-                <li>Minimum threshold: {threshold || minThreshold} units</li>
+                <li>Minimum threshold: {minThreshold} units</li>
                 <li>Current below minimum by {belowMinimum} units</li>
               </ul>
             </section>

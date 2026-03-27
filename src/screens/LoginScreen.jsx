@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase";
 
 const COUNTRY_CODES = ["+355", "+1", "+44", "+91"];
 

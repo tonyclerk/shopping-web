@@ -1,40 +1,45 @@
 import { useMemo, useState } from "react";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 import SellerLayout from "../components/SellerLayout.jsx";
+import { db } from "../firebase";
+import {
+  buildStockUpdatePayload,
+  DEFAULT_STOCK_THRESHOLD,
+  useSellerInventoryProducts,
+} from "../utils/inventory";
 import "./InventoryManagementScreen.css";
 
-const INVENTORY_ITEMS = [
-  { name: "Leather Belt", brand: "Urban Style", sku: "SKU00001", variant: "Color: Black", stock: 24, threshold: 10, status: "In Stock" },
-  { name: "Canvas Backpack", brand: "Travel Gear", sku: "SKU00002", variant: "Color: Blue, Size: M", stock: 15, threshold: 8, status: "In Stock" },
-  { name: "Aviator Sunglasses", brand: "Sun Shield", sku: "SKU00003", variant: "Color: Gold", stock: 32, threshold: 12, status: "In Stock" },
-  { name: "Premium Wallet", brand: "Luxury Goods", sku: "SKU00004", variant: "Color: Brown", stock: 18, threshold: 10, status: "In Stock" },
-  { name: "Sports Watch", brand: "Time Master", sku: "SKU00005", variant: "Color: Black, Size: L", stock: 28, threshold: 15, status: "In Stock" },
-  { name: "Running Sneakers", brand: "Sport Plus", sku: "SKU00006", variant: "Color: White, Size: 10", stock: 42, threshold: 20, status: "In Stock" },
-  { name: "Denim Jacket", brand: "Fashion Hub", sku: "SKU00007", variant: "Color: Blue, Size: L", stock: 12, threshold: 8, status: "In Stock" },
-  { name: "Baseball Cap", brand: "Sports Wear", sku: "SKU00008", variant: "Color: Red", stock: 35, threshold: 15, status: "In Stock" },
-  { name: "Formal Oxfords", brand: "Classic Footwear", sku: "SKU21002", variant: "Color: Blue, Size: L", stock: 5, threshold: 10, status: "Low Stock" },
-  { name: "Silk Scarf", brand: "Fashion Trends", sku: "SKU00010", variant: "Color: Pink", stock: 22, threshold: 10, status: "In Stock" },
-];
-
 function InventoryManagementScreen() {
-  const [inventoryItems, setInventoryItems] = useState(INVENTORY_ITEMS);
+  const navigate = useNavigate();
+  const { products: inventoryItems, loading } = useSellerInventoryProducts();
   const [adjustDialog, setAdjustDialog] = useState({ open: false, item: null });
   const [adjustmentType, setAdjustmentType] = useState("add");
   const [quantity, setQuantity] = useState("0");
+  const [threshold, setThreshold] = useState(String(DEFAULT_STOCK_THRESHOLD));
   const [reason, setReason] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const formattedDate = useMemo(() => new Intl.DateTimeFormat("en-CA").format(new Date()), []);
 
-  const stats = useMemo(() => {
-    const lowStock = inventoryItems.filter((item) => item.status === "Low Stock").length;
-    const outOfStock = inventoryItems.filter((item) => item.stock <= 0).length;
-    return { totalSkus: 32, lowStock, outOfStock };
-  }, [inventoryItems]);
+  const lowStockItems = useMemo(
+    () => inventoryItems.filter((item) => item.stock < item.threshold),
+    [inventoryItems],
+  );
 
-  const lowStockItem = useMemo(() => inventoryItems.find((item) => item.status === "Low Stock"), [inventoryItems]);
+  const stats = useMemo(() => {
+    const outOfStock = inventoryItems.filter((item) => item.stock <= 0).length;
+    return {
+      totalSkus: inventoryItems.length,
+      lowStock: lowStockItems.length,
+      outOfStock,
+    };
+  }, [inventoryItems, lowStockItems]);
 
   const openAdjustDialog = (item) => {
     setAdjustmentType("add");
     setQuantity("0");
+    setThreshold(String(item.threshold ?? DEFAULT_STOCK_THRESHOLD));
     setReason("");
     setAdjustDialog({ open: true, item });
   };
@@ -43,30 +48,32 @@ function InventoryManagementScreen() {
     setAdjustDialog({ open: false, item: null });
   };
 
-  const applyAdjustment = () => {
-    if (!adjustDialog.item) return;
+  const applyAdjustment = async () => {
+    if (!adjustDialog.item || isSaving) return;
 
     const qty = Number(quantity) || 0;
+    const nextThreshold = Number(threshold) || DEFAULT_STOCK_THRESHOLD;
     if (qty < 0) return;
 
-    setInventoryItems((prev) =>
-      prev.map((item) => {
-        if (item.sku !== adjustDialog.item.sku) return item;
+    let nextStock = adjustDialog.item.stock;
+    if (adjustmentType === "add") nextStock = adjustDialog.item.stock + qty;
+    if (adjustmentType === "remove") nextStock = Math.max(adjustDialog.item.stock - qty, 0);
+    if (adjustmentType === "set") nextStock = qty;
 
-        let nextStock = item.stock;
-        if (adjustmentType === "add") nextStock = item.stock + qty;
-        if (adjustmentType === "remove") nextStock = Math.max(item.stock - qty, 0);
-        if (adjustmentType === "set") nextStock = qty;
-
-        return {
-          ...item,
-          stock: nextStock,
-          status: nextStock <= item.threshold ? "Low Stock" : "In Stock",
-        };
-      }),
-    );
-
-    closeAdjustDialog();
+    setIsSaving(true);
+    try {
+      await updateDoc(doc(db, "products", adjustDialog.item.id), {
+        ...buildStockUpdatePayload(adjustDialog.item, nextStock, nextThreshold),
+        inventoryAdjustmentReason: reason || null,
+        updatedAt: serverTimestamp(),
+      });
+      closeAdjustDialog();
+    } catch (error) {
+      console.error("Inventory update failed:", error);
+      window.alert("Failed to update product stock.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -95,23 +102,47 @@ function InventoryManagementScreen() {
           </article>
         </section>
 
-        {lowStockItem ? (
+        {lowStockItems.length ? (
           <section className="low-stock-banner">
             <div className="low-stock-title-row">
               <span className="low-stock-icon">!</span>
               <h3>Low Stock Alerts</h3>
             </div>
-            <div className="low-stock-item-row">
-              <div className="low-stock-thumb">IMG</div>
-              <div className="low-stock-text">
-                <p>{lowStockItem.name}</p>
-                <span>{lowStockItem.variant} | SKU: {lowStockItem.sku}</span>
+
+            {lowStockItems.map((item) => (
+              <div className="low-stock-item-row" key={item.id}>
+                <div className="low-stock-thumb">
+                  {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : "IMG"}
+                </div>
+                <div className="low-stock-text">
+                  <p>{item.name}</p>
+                  <span>{item.variant || "Default variant"} | SKU: {item.sku}</span>
+                </div>
+                <strong>{item.stock} units left</strong>
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate("/add-stock", {
+                      state: {
+                        productId: item.id,
+                        productName: item.name,
+                        variant: item.variant,
+                        sku: item.sku,
+                        category: item.category,
+                        brand: item.brand,
+                        sellingPrice: item.sellingPrice,
+                        currentStock: item.stock,
+                        minThreshold: item.threshold,
+                        imageUrl: item.imageUrl,
+                        raw: item.raw,
+                      },
+                    })
+                  }
+                >
+                  Restock
+                </button>
               </div>
-              <strong>{lowStockItem.stock} units left</strong>
-              <button type="button" onClick={() => openAdjustDialog(lowStockItem)}>
-                Restock
-              </button>
-            </div>
+            ))}
           </section>
         ) : null}
 
@@ -131,31 +162,43 @@ function InventoryManagementScreen() {
                 </tr>
               </thead>
               <tbody>
-                {inventoryItems.map((item) => (
-                  <tr key={item.sku}>
-                    <td>
-                      <div className="inventory-product-cell">
-                        <div className="inventory-thumb">IMG</div>
-                        <div>
-                          <p className="inventory-product-name">{item.name}</p>
-                          <p className="inventory-product-brand">{item.brand}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>{item.sku}</td>
-                    <td>{item.variant}</td>
-                    <td className="stock-value">{item.stock}</td>
-                    <td>{item.threshold}</td>
-                    <td>
-                      <span className={`inventory-status ${item.status === "In Stock" ? "ok" : "low"}`}>{item.status}</span>
-                    </td>
-                    <td>
-                      <button type="button" className="inventory-edit-btn" onClick={() => window.alert(`Edit ${item.sku}`)}>
-                        Edit
-                      </button>
-                    </td>
+                {loading ? (
+                  <tr>
+                    <td colSpan="7">Loading inventory...</td>
                   </tr>
-                ))}
+                ) : inventoryItems.length ? (
+                  inventoryItems.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        <div className="inventory-product-cell">
+                          <div className="inventory-thumb">
+                            {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : "IMG"}
+                          </div>
+                          <div>
+                            <p className="inventory-product-name">{item.name}</p>
+                            <p className="inventory-product-brand">{item.brand}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{item.sku}</td>
+                      <td>{item.variant || "Default variant"}</td>
+                      <td className="stock-value">{item.stock}</td>
+                      <td>{item.threshold}</td>
+                      <td>
+                        <span className={`inventory-status ${item.status === "In Stock" ? "ok" : "low"}`}>{item.status}</span>
+                      </td>
+                      <td>
+                        <button type="button" className="inventory-edit-btn" onClick={() => openAdjustDialog(item)}>
+                          Adjust
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7">No products found in inventory.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -197,6 +240,11 @@ function InventoryManagementScreen() {
             </label>
 
             <label className="adjust-field">
+              Low Stock Threshold
+              <input type="number" min="0" value={threshold} onChange={(event) => setThreshold(event.target.value)} />
+            </label>
+
+            <label className="adjust-field">
               Reason
               <select value={reason} onChange={(event) => setReason(event.target.value)}>
                 <option value="">Select reason</option>
@@ -208,10 +256,10 @@ function InventoryManagementScreen() {
             </label>
 
             <div className="adjust-actions">
-              <button type="button" className="adjust-apply-btn" onClick={applyAdjustment}>
-                Apply Adjustment
+              <button type="button" className="adjust-apply-btn" onClick={applyAdjustment} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Apply Adjustment"}
               </button>
-              <button type="button" className="adjust-cancel-btn" onClick={closeAdjustDialog}>
+              <button type="button" className="adjust-cancel-btn" onClick={closeAdjustDialog} disabled={isSaving}>
                 Cancel
               </button>
             </div>
