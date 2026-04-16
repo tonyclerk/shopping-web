@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { auth, storage } from "../firebase";
 
 const EMPTY_VARIANT = {
   sku: "",
@@ -46,6 +48,8 @@ function AddProductDialog({ onClose, onSubmit }) {
   const [category, setCategory] = useState("");
   const [brand, setBrand] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const [variants, setVariants] = useState([createVariant()]);
   const [loading, setLoading] = useState(false);
   const [gender, setGender] = useState("");
@@ -75,6 +79,18 @@ function AddProductDialog({ onClose, onSubmit }) {
       setSubcategory("");
     }
   }, [subcategory, subcategoryOptions]);
+
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreviewUrl("");
+      return undefined;
+    }
+
+    const objectUrl = URL.createObjectURL(imageFile);
+    setImagePreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [imageFile]);
 
   const updateVariant = (index, key, value) => {
     setVariants((prev) =>
@@ -127,6 +143,15 @@ function AddProductDialog({ onClose, onSubmit }) {
     setVariants((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleImageFileChange = (event) => {
+    const [file] = event.target.files ?? [];
+    setImageFile(file ?? null);
+  };
+
+  const clearSelectedImageFile = () => {
+    setImageFile(null);
+  };
+
   const submit = async (event) => {
     event.preventDefault();
 
@@ -142,6 +167,20 @@ function AddProductDialog({ onClose, onSubmit }) {
 
     setLoading(true);
     try {
+      let resolvedImageUrl = imageUrl.trim();
+
+      if (imageFile) {
+        const sellerId = auth.currentUser?.uid ?? "anonymous";
+        const sanitizedFileName = imageFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+        const storageRef = ref(
+          storage,
+          `product-images/${sellerId}/${Date.now()}-${sanitizedFileName}`,
+        );
+
+        await uploadBytes(storageRef, imageFile, { contentType: imageFile.type });
+        resolvedImageUrl = await getDownloadURL(storageRef);
+      }
+
       const cleanVariants = variants.map((variant) => {
         const price = parseNumber(variant.price);
         const discount = parseNumber(variant.discount);
@@ -169,7 +208,7 @@ function AddProductDialog({ onClose, onSubmit }) {
         category,
         subcategory,
         brand: brand.trim() || "",
-        image: imageUrl.trim() || "",
+        image: resolvedImageUrl,
         status: "draft",
         stock: totalStock > 0 ? `${totalStock} units` : null,
         stockCount: totalStock,
@@ -269,6 +308,28 @@ function AddProductDialog({ onClose, onSubmit }) {
             Cover Image URL
             <input value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} placeholder="https://example.com/image.jpg" />
           </label>
+
+          <label>
+            Upload From Device
+            <input type="file" accept="image/*" onChange={handleImageFileChange} />
+          </label>
+
+          {imageFile ? (
+            <div className="dialog-upload-meta">
+              <span>{imageFile.name}</span>
+              <button type="button" className="danger-link" onClick={clearSelectedImageFile}>Remove file</button>
+            </div>
+          ) : null}
+
+          {imageFile ? (
+            <p className="dialog-helper-text">The selected file will be uploaded to Firebase Storage when you create the product.</p>
+          ) : null}
+
+          {imagePreviewUrl || imageUrl.trim() ? (
+            <div className="dialog-image-preview">
+              <img src={imagePreviewUrl || imageUrl.trim()} alt="Selected product preview" />
+            </div>
+          ) : null}
 
           <div className="dialog-divider" />
 

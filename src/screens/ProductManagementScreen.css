@@ -232,6 +232,10 @@
   font-size: 14px;
 }
 
+.dialog-body input[type="file"] {
+  padding: 8px;
+}
+
 .dialog-body textarea {
   min-height: 72px;
 }
@@ -266,6 +270,45 @@
 .dialog-divider {
   height: 1px;
   background: rgba(0, 0, 0, 0.1);
+}
+
+.dialog-upload-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fafafa;
+  font-size: 13px;
+}
+
+.dialog-upload-meta span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dialog-helper-text {
+  margin: -8px 0 0;
+  color: #4a5565;
+  font-size: 13px;
+}
+
+.dialog-image-preview {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.dialog-image-preview img {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
 }
 
 .dialog-variants-head {

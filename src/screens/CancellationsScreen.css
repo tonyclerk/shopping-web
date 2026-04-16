@@ -126,6 +126,76 @@
   padding: 12px;
 }
 
+.cancel-trend-wrap {
+  margin-top: 20px;
+  min-height: 180px;
+  border-radius: 10px;
+  background: #f9fafb;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.cancel-trend-col {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.cancel-trend-bar-wrap {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.cancel-trend-bar {
+  width: 70%;
+  border-radius: 8px 8px 4px 4px;
+  background: linear-gradient(180deg, #f97316, #e7000b);
+  min-height: 8px;
+}
+
+.cancel-trend-col small {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.cancel-trend-col span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.cancel-reasons-list {
+  margin-top: 20px;
+  display: grid;
+  gap: 10px;
+}
+
+.cancel-reason-row {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cancel-reason-row p {
+  margin: 0;
+  color: #374151;
+}
+
+.cancel-reason-row strong {
+  color: #991b1b;
+}
+
 .recent-cancel-card .empty-cancel-wrap {
   margin-top: 24px;
   border-radius: 10px;
@@ -150,6 +220,40 @@
 .empty-cancel-wrap p {
   margin: 4px 0 0;
   color: #717182;
+}
+
+.recent-cancel-list {
+  margin-top: 20px;
+  display: grid;
+  gap: 10px;
+}
+
+.recent-cancel-row {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.recent-cancel-row h4 {
+  margin: 0;
+}
+
+.recent-cancel-row p {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.recent-cancel-meta {
+  text-align: right;
+}
+
+.recent-cancel-meta strong {
+  color: #991b1b;
 }
 
 .cancel-tips-card {
@@ -197,5 +301,19 @@
 
   .cancel-stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .cancel-trend-wrap {
+    grid-template-columns: repeat(7, minmax(26px, 1fr));
+    gap: 6px;
+  }
+
+  .recent-cancel-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .recent-cancel-meta {
+    text-align: left;
   }
 }

@@ -43,6 +43,7 @@ export function buildProfileState(seller = {}, authUser) {
 
   return {
     vendorName: seller?.name ?? authUser?.displayName ?? authUser?.email ?? "-",
+    logoUrl: seller?.logoUrl ?? seller?.profileImageUrl ?? authUser?.photoURL ?? "",
     approvalStatus: seller?.status ?? "pending",
     vendorId: authUser?.uid ?? "-",
     business: {

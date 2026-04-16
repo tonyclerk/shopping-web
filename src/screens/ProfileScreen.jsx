@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../firebase";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { auth, db, storage } from "../firebase";
 import SellerLayout from "../components/SellerLayout.jsx";
 import { buildProfileState, SELLER_CATEGORIES } from "../utils/sellerProfile";
 import "./ProfileScreen.css";
@@ -21,6 +22,8 @@ function ProfileScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sellerId, setSellerId] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
 
   const formattedDate = useMemo(
     () => new Intl.DateTimeFormat("en-US", {
@@ -58,6 +61,18 @@ function ProfileScreen() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!logoFile) {
+      setLogoPreviewUrl("");
+      return undefined;
+    }
+
+    const objectUrl = URL.createObjectURL(logoFile);
+    setLogoPreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [logoFile]);
+
   const handleTabChange = (tabKey) => {
     if (isEditing) return;
     setActiveTab(tabKey);
@@ -65,11 +80,13 @@ function ProfileScreen() {
 
   const startEdit = () => {
     setDraft(profile);
+    setLogoFile(null);
     setIsEditing(true);
   };
 
   const cancelEdit = () => {
     setDraft(profile);
+    setLogoFile(null);
     setIsEditing(false);
   };
 
@@ -77,11 +94,28 @@ function ProfileScreen() {
     if (!sellerId || !draft) return;
 
     try {
+      let logoUrl = draft.logoUrl ?? "";
+
+      if (logoFile) {
+        const sanitizedFileName = logoFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+        const storageRef = ref(storage, `seller-logos/${sellerId}/${Date.now()}-${sanitizedFileName}`);
+
+        await uploadBytes(storageRef, logoFile, { contentType: logoFile.type });
+        logoUrl = await getDownloadURL(storageRef);
+      }
+
+      const nextProfile = {
+        ...draft,
+        logoUrl,
+      };
+
       await setDoc(doc(db, "sellers", sellerId), {
+        name: draft.vendorName,
         businessName: draft.business.brandName,
         email: draft.business.email,
         phone: draft.business.phone,
         address: draft.business.address,
+        logoUrl,
         categories: draft.categories,
         bank: {
           accountHolderName: draft.bank.accountHolderName,
@@ -95,7 +129,9 @@ function ProfileScreen() {
         },
       }, { merge: true });
 
-      setProfile(draft);
+      setProfile(nextProfile);
+      setDraft(nextProfile);
+      setLogoFile(null);
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save profile:", error);
@@ -129,6 +165,17 @@ function ProfileScreen() {
       };
     });
   };
+
+  const handleLogoFileChange = (event) => {
+    const [file] = event.target.files ?? [];
+    setLogoFile(file ?? null);
+  };
+
+  const clearLogoFile = () => {
+    setLogoFile(null);
+  };
+
+  const displayedLogoUrl = logoPreviewUrl || (isEditing ? draft?.logoUrl : profile?.logoUrl) || "";
 
   if (loading) {
     return (
@@ -165,7 +212,21 @@ function ProfileScreen() {
         </section>
 
         <section className="profile-card">
-          <div className="profile-avatar">{profile.vendorName?.[0]?.toUpperCase() ?? "?"}</div>
+          <div className="profile-avatar-wrap">
+            <div className="profile-avatar">
+              {displayedLogoUrl ? (
+                <img src={displayedLogoUrl} alt={`${profile.vendorName} logo`} />
+              ) : (
+                profile.vendorName?.[0]?.toUpperCase() ?? "?"
+              )}
+            </div>
+            {isEditing ? (
+              <label className="profile-avatar-edit" aria-label="Change brand logo" title="Change brand logo">
+                <span aria-hidden="true">✏️</span>
+                <input type="file" accept="image/*" onChange={handleLogoFileChange} />
+              </label>
+            ) : null}
+          </div>
           <div className="profile-card-copy">
             <div className="profile-name-row">
               <h3>{profile.vendorName}</h3>
@@ -174,6 +235,12 @@ function ProfileScreen() {
             <p>Email: {profile.business.email}</p>
             <p>Phone: {profile.business.phone}</p>
             <p>Vendor ID: {profile.vendorId}</p>
+            {isEditing && logoFile ? (
+              <div className="profile-logo-file-row">
+                <span>{logoFile.name}</span>
+                <button type="button" className="profile-clear-logo-btn" onClick={clearLogoFile}>Remove</button>
+              </div>
+            ) : null}
           </div>
         </section>
 

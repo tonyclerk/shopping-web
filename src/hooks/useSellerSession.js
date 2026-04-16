@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, limit, query, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
 function useSellerSession() {
@@ -19,11 +19,22 @@ function useSellerSession() {
 
       try {
         const sellerSnapshot = await getDoc(doc(db, "sellers", user.uid));
+        let sellerData = sellerSnapshot.exists() ? sellerSnapshot.data() : null;
+
+        if (!sellerData && user.email) {
+          const byEmailQuery = query(
+            collection(db, "sellers"),
+            where("email", "==", user.email),
+            limit(1),
+          );
+          const byEmailSnapshot = await getDocs(byEmailQuery);
+          sellerData = byEmailSnapshot.empty ? null : byEmailSnapshot.docs[0].data();
+        }
 
         setSession({
           loading: false,
           user,
-          seller: sellerSnapshot.exists() ? sellerSnapshot.data() : null,
+          seller: sellerData,
         });
       } catch (error) {
         console.error("Failed to load seller session:", error);

@@ -2,7 +2,15 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import { getSellerNextRoute } from "../utils/sellerProfile";
 
@@ -15,21 +23,34 @@ function WebLoginScreen() {
 
   const login = async () => {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedPassword = password.trim();
+      const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, normalizedPassword);
       const user = userCredential.user;
+      const sellerRef = doc(db, "sellers", user.uid);
+      const sellerDoc = await getDoc(sellerRef);
+      let sellerData = sellerDoc.exists() ? sellerDoc.data() : null;
 
-      const sellerDoc = await getDoc(doc(db, "sellers", user.uid));
+      if (!sellerData) {
+        const fallbackQuery = query(
+          collection(db, "sellers"),
+          where("email", "==", user.email ?? normalizedEmail),
+          limit(1),
+        );
+        const fallbackResult = await getDocs(fallbackQuery);
+        sellerData = fallbackResult.empty ? null : fallbackResult.docs[0].data();
+      }
 
-      if (!sellerDoc.exists()) {
+      if (!sellerData) {
         await signOut(auth);
-        alert("Not a seller account");
+        alert("Seller profile not found for this account. Please contact support.");
         return;
       }
 
-      navigate(getSellerNextRoute(sellerDoc.data()), { replace: true });
+      navigate(getSellerNextRoute(sellerData), { replace: true });
     } catch (err) {
       console.log(err);
-      alert("Login failed");
+      alert(err?.message ?? "Login failed");
     }
   };
 

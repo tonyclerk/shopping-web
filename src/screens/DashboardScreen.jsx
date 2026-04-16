@@ -191,6 +191,11 @@ function DashboardScreen() {
     [orders],
   );
 
+  const cancellationsCount = useMemo(
+    () => orders.filter((order) => order.status === "cancelled").length,
+    [orders],
+  );
+
   const completedOrders = useMemo(
     () => orders.filter((order) => order.status === "delivered"),
     [orders],
@@ -213,9 +218,9 @@ function DashboardScreen() {
       { label: "Pending Fulfillment", value: String(pendingFulfillmentCount), icon: "products", iconBg: "#FFF7ED" },
       { label: "Low Stock Alerts", value: String(lowStockCount), icon: "alert", iconBg: "#FEF2F2" },
       { label: "Returns", value: "1", icon: "returns", iconBg: "#FAF5FF" },
-      { label: "Cancellations", value: "0", icon: "cancel", iconBg: "#F9FAFB" },
+      { label: "Cancellations", value: String(cancellationsCount), icon: "cancel", iconBg: "#F9FAFB" },
     ],
-    [lowStockCount, pendingFulfillmentCount, todaysEarnings, todaysOrdersCount],
+    [cancellationsCount, lowStockCount, pendingFulfillmentCount, todaysEarnings, todaysOrdersCount],
   );
 
   const insights = useMemo(

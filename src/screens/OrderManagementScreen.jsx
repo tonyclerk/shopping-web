@@ -18,7 +18,7 @@ const TABS = [
   { key: "all", label: "All Orders" },
   { key: "pending", label: "Pending" },
   { key: "accepted", label: "Accepted" },
-  { key: "placed", label: "Placed" },
+  { key: "shipped", label: "Shipped" },
   { key: "delivered", label: "Delivered" },
   { key: "cancelled", label: "Cancelled" },
 ];
@@ -37,15 +37,15 @@ const ACTION_CONFIG = {
     { status: "accepted", label: "Accept", tone: "dark" },
     { status: "cancelled", label: "Reject", tone: "reject" },
   ],
-  accepted: [{ status: "placed", label: "Order Placed", tone: "dark", icon: "box" }],
-  placed: [{ status: "delivered", label: "Delivered", tone: "dark", icon: "pickup" }],
+  accepted: [{ status: "shipped", label: "Order Shipped", tone: "dark", icon: "box" }],
+  shipped: [{ status: "delivered", label: "Delivered", tone: "dark", icon: "pickup" }],
 };
 
 const STATUS_ALIASES = {
   new: "pending",
   confirmed: "accepted",
-  packed: "placed",
-  picked_up: "placed",
+  packed: "shipped",
+  picked_up: "shipped",
 };
 
 const formatDate = (ts) => {
@@ -81,6 +81,7 @@ const normalizeOrderStatus = (order) => {
     return "pending";
   }
 
+  if (rawStatus === "placed") return "shipped";
   return rawStatus;
 };
 
@@ -110,6 +111,25 @@ const parseAmount = (value) => {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
   if (typeof value === "string") return Number(value.replace(/[^0-9.-]/g, "")) || 0;
   return 0;
+};
+
+const getOrderCreatedAtMs = (order) => {
+  const createdAt = order?.createdAt;
+  if (typeof createdAt?.toMillis === "function") return createdAt.toMillis();
+  if (createdAt instanceof Date) return createdAt.getTime();
+  const parsed = new Date(createdAt ?? 0).getTime();
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const matchesSellerItemById = (item, sellerUid) => {
+  if (!item || !sellerUid) return false;
+  return item.sellerId === sellerUid;
+};
+
+const matchesOrderBySellerId = (order, sellerUid) => {
+  if (!order || !sellerUid) return false;
+  if (order.sellerId === sellerUid) return true;
+  return Array.isArray(order.items) && order.items.some((item) => matchesSellerItemById(item, sellerUid));
 };
 
 function EyeIcon() {
@@ -229,15 +249,17 @@ export default function OrderManagementScreen() {
       }
 
       setLoading(true);
+      const subscribeToOrders = (preferOrderedQuery = true) => {
+        const q = preferOrderedQuery
+          ? query(collectionGroup(db, "orders"), orderBy("createdAt", "desc"))
+          : query(collectionGroup(db, "orders"));
 
-      const q = query(collectionGroup(db, "orders"), orderBy("createdAt", "desc"));
-
-      unsubSnapshot = onSnapshot(
-        q,
+        unsubSnapshot = onSnapshot(
+          q,
         async (snapshot) => {
           const customerCache = new Map();
 
-          const sellerOrders = await Promise.all(
+          const sellerOrdersRaw = await Promise.all(
             snapshot.docs
               .map((snap) => ({
                 id: snap.id,
@@ -245,9 +267,11 @@ export default function OrderManagementScreen() {
                 customerUid: snap.ref.parent?.parent?.id ?? null,
                 ...snap.data(),
               }))
-              .filter((order) => order.items?.some((item) => item.sellerId === seller.uid))
+              .filter((order) => matchesOrderBySellerId(order, seller.uid))
               .map(async (order) => {
-                const sellerItems = order.items.filter((item) => item.sellerId === seller.uid);
+                const rawItems = Array.isArray(order.items) ? order.items : [];
+                const sellerItems = rawItems.filter((item) => matchesSellerItemById(item, seller.uid));
+                const finalItems = sellerItems.length ? sellerItems : rawItems;
                 const customerId = getCustomerId(order);
                 let customerProfile = null;
 
@@ -266,8 +290,8 @@ export default function OrderManagementScreen() {
                 return {
                   ...order,
                   status: normalizeOrderStatus(order),
-                  items: sellerItems,
-                  sellerSubtotal: sellerItems.reduce(
+                  items: finalItems,
+                  sellerSubtotal: finalItems.reduce(
                     (sum, item) => sum + Number(item.price ?? 0) * Number(item.quantity ?? 0),
                     0,
                   ),
@@ -288,15 +312,24 @@ export default function OrderManagementScreen() {
               }),
           );
 
+          const sellerOrders = sellerOrdersRaw.sort((a, b) => getOrderCreatedAtMs(b) - getOrderCreatedAtMs(a));
           setOrders(sellerOrders);
           setSelectedOrder((current) => sellerOrders.find((order) => order.id === current?.id) ?? null);
           setLoading(false);
         },
         (err) => {
+          if (preferOrderedQuery && (err?.code === "failed-precondition" || err?.code === "permission-denied")) {
+            console.warn("Falling back to un-ordered orders query:", err);
+            subscribeToOrders(false);
+            return;
+          }
           console.error("Firestore error:", err.message);
           setLoading(false);
         },
       );
+      };
+
+      subscribeToOrders(true);
     });
 
     return () => {
@@ -311,7 +344,7 @@ export default function OrderManagementScreen() {
   }, [orders, selectedTab]);
 
   const counts = useMemo(() => {
-    const result = { all: orders.length, pending: 0, accepted: 0, placed: 0, delivered: 0, cancelled: 0 };
+    const result = { all: orders.length, pending: 0, accepted: 0, shipped: 0, delivered: 0, cancelled: 0 };
     orders.forEach((order) => {
       if (result[order.status] !== undefined) result[order.status] += 1;
     });
@@ -320,10 +353,16 @@ export default function OrderManagementScreen() {
 
   const updateStatus = async (order, newStatus) => {
     try {
-      await updateDoc(order.ref, {
+      const payload = {
         status: newStatus,
         updatedAt: serverTimestamp(),
-      });
+      };
+
+      if (newStatus === "delivered") {
+        payload.deliveredAt = serverTimestamp();
+      }
+
+      await updateDoc(order.ref, payload);
     } catch (err) {
       console.error("Status update failed:", err);
       window.alert("Failed to update order status.");

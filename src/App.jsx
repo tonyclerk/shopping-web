@@ -3,7 +3,6 @@ import DashboardScreen from "./screens/DashboardScreen.jsx";
 import TodaysOrdersScreen from "./screens/TodaysOrdersScreen.jsx";
 import TodaysRevenueScreen from "./screens/TodaysRevenueScreen.jsx";
 import OrderDetailsScreen from "./screens/OrderDetailsScreen.jsx";
-import LoginScreen from "./screens/LoginScreen.jsx";
 import NotFoundScreen from "./screens/NotFoundScreen.jsx";
 import OtpVerificationScreen from "./screens/OtpVerificationScreen.jsx";
 import OnboardingScreen from "./screens/OnboardingScreen.jsx";
@@ -88,7 +87,7 @@ function App() {
       <Route path="/welcome" element={<Navigate to="/" replace />} />
       <Route path="/auth/login" element={<PublicOnlyRoute><WebLoginScreen /></PublicOnlyRoute>} />
       <Route path="/auth/signup" element={<PublicOnlyRoute><SignupScreen /></PublicOnlyRoute>} />
-      <Route path="/login" element={<PublicOnlyRoute><LoginScreen /></PublicOnlyRoute>} />
+      <Route path="/login" element={<Navigate to="/auth/login" replace />} />
       <Route path="/verify-otp" element={<PublicOnlyRoute><OtpVerificationScreen /></PublicOnlyRoute>} />
       <Route path="/onboarding" element={<OnboardingBusinessRoute><OnboardingScreen /></OnboardingBusinessRoute>} />
       <Route path="/categories" element={<OnboardingCategoriesRoute><CategoriesScreen /></OnboardingCategoriesRoute>} />

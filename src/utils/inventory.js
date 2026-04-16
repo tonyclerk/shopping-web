@@ -106,13 +106,14 @@ export function useSellerInventoryProducts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let unsubscribeProducts = null;
+    let unsubscribeById = null;
+    let unsubscribeByEmail = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, (seller) => {
-      if (unsubscribeProducts) {
-        unsubscribeProducts();
-        unsubscribeProducts = null;
-      }
+      if (unsubscribeById) unsubscribeById();
+      if (unsubscribeByEmail) unsubscribeByEmail();
+      unsubscribeById = null;
+      unsubscribeByEmail = null;
 
       if (!seller) {
         setProducts([]);
@@ -121,30 +122,61 @@ export function useSellerInventoryProducts() {
       }
 
       setLoading(true);
-      const productsQuery = query(collection(db, "products"), where("sellerId", "==", seller.uid));
+      const byIdMap = new Map();
+      const byEmailMap = new Map();
 
-      unsubscribeProducts = onSnapshot(
-        productsQuery,
-        (snapshot) => {
-          const rows = snapshot.docs.map(normalizeInventoryProduct);
-          rows.sort((a, b) => {
-            const aMs = a.raw?.createdAt?.toMillis?.() ?? 0;
-            const bMs = b.raw?.createdAt?.toMillis?.() ?? 0;
-            return bMs - aMs;
-          });
-          setProducts(rows);
-          setLoading(false);
-        },
+      const syncRows = () => {
+        const merged = new Map([...byEmailMap, ...byIdMap]);
+        const rows = Array.from(merged.values());
+        rows.sort((a, b) => {
+          const aMs = a.raw?.createdAt?.toMillis?.() ?? 0;
+          const bMs = b.raw?.createdAt?.toMillis?.() ?? 0;
+          return bMs - aMs;
+        });
+        setProducts(rows);
+        setLoading(false);
+      };
+
+      const applySnapshot = (targetMap, snapshot) => {
+        targetMap.clear();
+        snapshot.docs.forEach((docSnap) => {
+          const normalized = normalizeInventoryProduct(docSnap);
+          targetMap.set(normalized.id, normalized);
+        });
+        syncRows();
+      };
+
+      const productsByIdQuery = query(collection(db, "products"), where("sellerId", "==", seller.uid));
+      unsubscribeById = onSnapshot(
+        productsByIdQuery,
+        (snapshot) => applySnapshot(byIdMap, snapshot),
         (error) => {
-          console.error("Inventory listener failed:", error);
-          setProducts([]);
-          setLoading(false);
+          console.error("Inventory-by-id listener failed:", error);
+          byIdMap.clear();
+          syncRows();
         },
       );
+
+      if (seller.email) {
+        const productsByEmailQuery = query(collection(db, "products"), where("sellerEmail", "==", seller.email));
+        unsubscribeByEmail = onSnapshot(
+          productsByEmailQuery,
+          (snapshot) => applySnapshot(byEmailMap, snapshot),
+          (error) => {
+            console.error("Inventory-by-email listener failed:", error);
+            byEmailMap.clear();
+            syncRows();
+          },
+        );
+      } else {
+        byEmailMap.clear();
+        syncRows();
+      }
     });
 
     return () => {
-      if (unsubscribeProducts) unsubscribeProducts();
+      if (unsubscribeById) unsubscribeById();
+      if (unsubscribeByEmail) unsubscribeByEmail();
       unsubscribeAuth();
     };
   }, []);

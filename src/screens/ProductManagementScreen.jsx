@@ -82,44 +82,82 @@ function ProductManagementScreen() {
   // ── Real-time Firestore listener ───────────────────────────────────────────
  // Replace your existing useEffect with this
 useEffect(() => {
-  let unsubscribeProducts = null;
+  let unsubscribeById = null;
+  let unsubscribeByEmail = null;
 
   const unsubscribeAuth = onAuthStateChanged(auth, (seller) => {
-    if (unsubscribeProducts) {
-      unsubscribeProducts();
-      unsubscribeProducts = null;
-    }
+    if (unsubscribeById) unsubscribeById();
+    if (unsubscribeByEmail) unsubscribeByEmail();
+    unsubscribeById = null;
+    unsubscribeByEmail = null;
 
     if (!seller) {
       setFbProducts([]);
       return;
     }
 
-    const q = query(
+    const productsByIdQuery = query(
       collection(db, "products"),
       where("sellerId", "==", seller.uid),
     );
 
-    unsubscribeProducts = onSnapshot(
-      q,
-      (snapshot) => {
-        const rows = snapshot.docs.map(normalizeFirestoreProduct);
-        rows.sort((a, b) => {
-          const aMs = a?._raw?.createdAt?.toMillis?.() ?? 0;
-          const bMs = b?._raw?.createdAt?.toMillis?.() ?? 0;
-          return bMs - aMs;
-        });
-        setFbProducts(rows);
-      },
+    const byIdMap = new Map();
+    const byEmailMap = new Map();
+
+    const syncRows = () => {
+      const merged = new Map([...byEmailMap, ...byIdMap]);
+      const rows = Array.from(merged.values());
+      rows.sort((a, b) => {
+        const aMs = a?._raw?.createdAt?.toMillis?.() ?? 0;
+        const bMs = b?._raw?.createdAt?.toMillis?.() ?? 0;
+        return bMs - aMs;
+      });
+      setFbProducts(rows);
+    };
+
+    const applySnapshot = (targetMap, snapshot) => {
+      targetMap.clear();
+      snapshot.docs.forEach((snap) => {
+        const normalized = normalizeFirestoreProduct(snap);
+        targetMap.set(normalized.id, normalized);
+      });
+      syncRows();
+    };
+
+    unsubscribeById = onSnapshot(
+      productsByIdQuery,
+      (snapshot) => applySnapshot(byIdMap, snapshot),
       (err) => {
         console.error("Products listener failed:", err);
-        setFbProducts([]);
+        byIdMap.clear();
+        syncRows();
       },
     );
+
+    if (seller.email) {
+      const productsByEmailQuery = query(
+        collection(db, "products"),
+        where("sellerEmail", "==", seller.email),
+      );
+
+      unsubscribeByEmail = onSnapshot(
+        productsByEmailQuery,
+        (snapshot) => applySnapshot(byEmailMap, snapshot),
+        (err) => {
+          console.error("Products-by-email listener failed:", err);
+          byEmailMap.clear();
+          syncRows();
+        },
+      );
+    } else {
+      byEmailMap.clear();
+      syncRows();
+    }
   });
 
   return () => {
-    if (unsubscribeProducts) unsubscribeProducts();
+    if (unsubscribeById) unsubscribeById();
+    if (unsubscribeByEmail) unsubscribeByEmail();
     unsubscribeAuth();
   };
 }, []);

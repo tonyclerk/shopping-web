@@ -47,7 +47,7 @@ function SignupScreen() {
 
       alert("Seller account created");
 
-      navigate("/login");
+      navigate("/auth/login");
 
     } catch (error) {
       console.log(error);
